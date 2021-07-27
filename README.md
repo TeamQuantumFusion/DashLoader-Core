@@ -1,2 +1,2 @@
 # DashLoader-Core
-The framework for launching at the speed of light.
+The framework for launching at the speed of light
