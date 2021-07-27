@@ -1,2 +1,11 @@
-rootProject.name = 'gradle'
+rootProject.name = "dashloader-core"
 
+enableFeaturePreview "VERSION_CATALOGS"
+
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs {
+            from files("libs.versions.toml")
+        }
+    }
+}

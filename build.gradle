@@ -1,18 +1,35 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation
+
 plugins {
-    id 'java'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'java-library'
 }
 
-group 'org.example'
-version '1.0-SNAPSHOT'
+group 'net.oskarstrom.dashloader'
+version '3.0.0'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+    api libs.activej.serializer
+    shadow libs.bundles.activej
+    shadow libs.slf4j.api
+
+    implementation libs.snakeyaml
+    shadow libs.snakeyaml
+
+    testImplementation libs.junit.jupiter.api
+    testRuntimeOnly libs.junit.jupiter.engine
 }
+
+task relocateShadowJar(type: ConfigureShadowRelocation) {
+    target = tasks.shadowJar
+    prefix = "net.oskarstrom.dashloader.shadowed"
+}
+
+tasks.shadowJar.dependsOn relocateShadowJar
 
 test {
     useJUnitPlatform()

@@ -1,0 +1,30 @@
+[versions]
+activej = "4.4-rc1"
+junit-jupiter = "5.7.0"
+
+[bundles]
+activej = [ "activej-serializer", "activej-codegen" ]
+
+[libraries.activej-serializer]
+module = "io.activej:activej-serializer"
+version.ref = "activej"
+
+[libraries.activej-codegen]
+module = "io.activej:activej-codegen"
+version.ref = "activej"
+
+[libraries.slf4j-api]
+module = "org.slf4j:slf4j-api"
+version = "1.7.29"
+
+[libraries.snakeyaml]
+module = "org.yaml:snakeyaml"
+version = "1.27"
+
+[libraries.junit-jupiter-api]
+module = "org.junit.jupiter:junit-jupiter-api"
+version.ref = "junit-jupiter"
+
+[libraries.junit-jupiter-engine]
+module = "org.junit.jupiter:junit-jupiter-engine"
+version.ref = "junit-jupiter"
