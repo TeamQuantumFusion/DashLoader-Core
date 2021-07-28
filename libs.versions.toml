@@ -17,6 +17,10 @@ version.ref = "activej"
 module = "org.slf4j:slf4j-api"
 version = "1.7.29"
 
+[libraries.fastutil]
+module = "it.unimi.dsi:fastutil"
+version = "8.5.4"
+
 [libraries.snakeyaml]
 module = "org.yaml:snakeyaml"
 version = "1.27"

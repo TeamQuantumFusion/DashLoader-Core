@@ -19,6 +19,7 @@ dependencies {
 
     implementation libs.snakeyaml
     shadow libs.snakeyaml
+    implementation libs.fastutil
 
     testImplementation libs.junit.jupiter.api
     testRuntimeOnly libs.junit.jupiter.engine
