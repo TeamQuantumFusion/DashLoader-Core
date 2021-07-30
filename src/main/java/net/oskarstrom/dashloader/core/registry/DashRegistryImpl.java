@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.Set;
 
 public class DashRegistryImpl implements DashRegistry {
-	private Object2ByteMap<Class<?>> storageMappings = new Object2ByteOpenHashMap<>();
-	private List<RegistryStorage<?>> storages = new ArrayList<>();
-	private Set<Class<?>> apiFailed = new HashSet<>();
+	private final Object2ByteMap<Class<?>> storageMappings = new Object2ByteOpenHashMap<>();
+	private final List<RegistryStorage<?>> storages = new ArrayList<>();
+	private final Set<Class<?>> apiFailed = new HashSet<>();
 
 	@Override
 	public <F> Pointer add(F object) {
