@@ -3,13 +3,31 @@ package net.oskarstrom.dashloader.core;
 import net.oskarstrom.dashloader.api.DashLoaderAPI;
 import net.oskarstrom.dashloader.api.registry.RegistryStorage;
 import net.oskarstrom.dashloader.core.registry.DashRegistryImpl;
+import net.oskarstrom.dashloader.core.serializer.DashSerializerManager;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class DashLoaderManager implements DashLoaderAPI {
-	private final DashRegistryImpl registry = new DashRegistryImpl();
+	private final Path dataCacheFolder;
+	private final Path systemCacheFolder;
 
+	private final DashRegistryImpl registry = new DashRegistryImpl();
+	private final DashSerializerManager serializerManager = new DashSerializerManager(this);
+
+	public DashLoaderManager(Path dataCacheFolder, Path systemCacheFolder) {
+		this.dataCacheFolder = dataCacheFolder;
+		this.systemCacheFolder = systemCacheFolder;
+	}
+
+	public Path getDataCacheFolder() {
+		return dataCacheFolder;
+	}
+
+	public Path getSystemCacheFolder() {
+		return systemCacheFolder;
+	}
 
 	/**
 	 * Use this to register a custom registry for deduplication of objects.
@@ -25,6 +43,4 @@ public class DashLoaderManager implements DashLoaderAPI {
 		mappings.forEach(fClass -> registry.addMapping(fClass, pointer));
 		registry.addReturn(pointer, consumer);
 	}
-
-
 }

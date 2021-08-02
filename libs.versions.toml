@@ -1,5 +1,5 @@
 [versions]
-activej = "4.4-rc1"
+activej = "5.0-beta1"
 junit-jupiter = "5.7.0"
 
 [bundles]
