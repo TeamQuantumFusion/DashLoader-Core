@@ -2,8 +2,7 @@ package net.oskarstrom.dashloader.api.registry;
 
 import net.oskarstrom.dashloader.api.Dashable;
 
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.StringJoiner;
 
 public interface FactoryConstructor<F, D extends Dashable<F>> {
 	D create(F object, DashRegistry registry);
@@ -14,9 +13,8 @@ public interface FactoryConstructor<F, D extends Dashable<F>> {
 		OBJECT(true),
 		EMPTY(false);
 
-
-		private boolean containsSelfObject;
-		private Class<?>[] list;
+		private final boolean containsSelfObject;
+		private final Class<?>[] list;
 
 		Mode(boolean containsSelfObject, Class<?>... list) {
 			this.containsSelfObject = containsSelfObject;
@@ -24,14 +22,14 @@ public interface FactoryConstructor<F, D extends Dashable<F>> {
 		}
 
 		public Class<?>[] getParameters(Class<?> object) {
-			Class<?>[] out = new Class[(containsSelfObject ? 1 : 0) + list.length];
 			if (containsSelfObject) {
+				Class<?>[] out = new Class[list.length + 1];
 				out[0] = object;
 				System.arraycopy(list, 0, out, 1, out.length - 1);
+				return out;
 			} else {
-				System.arraycopy(list, 0, out, 0, out.length);
+				return list.clone();
 			}
-			return out;
 		}
 
 
@@ -40,20 +38,17 @@ public interface FactoryConstructor<F, D extends Dashable<F>> {
 			expectedMethod.append("public ");
 			expectedMethod.append(dashClass.getSimpleName());
 			expectedMethod.append('(');
-			printClasses(getParameters(rawClass), expectedMethod);
+			appendClassParameters(getParameters(rawClass), expectedMethod);
 			expectedMethod.append(')');
 			return expectedMethod.toString();
 		}
 
-		private void printClasses(Class<?>[] classes, StringBuilder stringBuilder) {
-			for (Iterator<Class<?>> iterator = Arrays.stream(classes).iterator(); iterator.hasNext(); ) {
-				Class<?> aClass = iterator.next();
-				final String simpleName = aClass.getSimpleName();
-				stringBuilder.append(simpleName).append(' ').append(Character.toLowerCase(simpleName.charAt(0))).append(simpleName.substring(1));
-				if (iterator.hasNext()) {
-					stringBuilder.append(", ");
-				}
+		private void appendClassParameters(Class<?>[] classes, StringBuilder stringBuilder) {
+			final StringJoiner joiner = new StringJoiner(", ");
+			for (int i = 0; i < classes.length; i++) {
+				joiner.add(classes[i].getSimpleName() + " arg" + i);
 			}
+			stringBuilder.append(joiner);
 		}
 	}
 }
