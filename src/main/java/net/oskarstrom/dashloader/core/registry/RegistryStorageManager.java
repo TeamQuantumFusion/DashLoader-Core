@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class RegistryStorageManager {
 
+
 	public static <F, D extends Dashable<F>> RegistryStorage<F> createSimpleRegistry(Class<F> rawClass, Class<D> dashClass, DashRegistry registry) {
 		return new RegistryStorageImpl.SimpleRegistryImpl<>(getConstructor(rawClass, dashClass), registry);
 	}

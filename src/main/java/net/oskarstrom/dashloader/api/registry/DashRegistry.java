@@ -4,7 +4,4 @@ public interface DashRegistry {
 	<F> Pointer add(F object);
 
 	<F> F get(Pointer pointer);
-
-
 }
-

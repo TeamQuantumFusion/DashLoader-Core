@@ -27,6 +27,7 @@ public class DashRegistryImpl implements DashRegistry {
 			return null;
 		}
 		final byte registryPointer = storageMappings.getByte(objectClass);
+		//noinspection unchecked
 		final RegistryStorage<F> registryStorage = (RegistryStorage<F>) storages.get(registryPointer);
 		final int objectPointer = registryStorage.add(object);
 		return new Pointer(objectPointer, registryPointer);
@@ -53,6 +54,7 @@ public class DashRegistryImpl implements DashRegistry {
 		if (registryStorage == null) {
 			throw new IllegalStateException("Registry storage " + pointer.registryPointer + " does not exist.");
 		}
+		//noinspection unchecked
 		return (F) registryStorage.get(pointer.objectPointer);
 	}
 }

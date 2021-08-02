@@ -7,7 +7,6 @@ import java.util.StringJoiner;
 public interface FactoryConstructor<F, D extends Dashable<F>> {
 	D create(F object, DashRegistry registry);
 
-
 	enum Mode {
 		FULL(true, DashRegistry.class),
 		OBJECT(true),
@@ -32,7 +31,6 @@ public interface FactoryConstructor<F, D extends Dashable<F>> {
 			}
 		}
 
-
 		public String getExpectedMethod(Class<?> dashClass, Class<?> rawClass) {
 			StringBuilder expectedMethod = new StringBuilder();
 			expectedMethod.append("public ");
@@ -46,6 +44,7 @@ public interface FactoryConstructor<F, D extends Dashable<F>> {
 		private void appendClassParameters(Class<?>[] classes, StringBuilder stringBuilder) {
 			final StringJoiner joiner = new StringJoiner(", ");
 			for (int i = 0; i < classes.length; i++) {
+				// int arg0, float arg1, Identifier arg2, etc
 				joiner.add(classes[i].getSimpleName() + " arg" + i);
 			}
 			stringBuilder.append(joiner);
