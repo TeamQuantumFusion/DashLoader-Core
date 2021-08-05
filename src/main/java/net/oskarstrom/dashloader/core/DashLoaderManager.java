@@ -10,15 +10,18 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class DashLoaderManager implements DashLoaderAPI {
+	private static DashLoaderManager instance;
 	private final Path dataCacheFolder;
 	private final Path systemCacheFolder;
 
 	private final DashRegistryImpl registry = new DashRegistryImpl();
 	private final DashSerializerManager serializerManager = new DashSerializerManager(this);
+	private final ThreadManager threadManager = new ThreadManager();
 
 	public DashLoaderManager(Path dataCacheFolder, Path systemCacheFolder) {
 		this.dataCacheFolder = dataCacheFolder;
 		this.systemCacheFolder = systemCacheFolder;
+		instance = this;
 	}
 
 	public Path getDataCacheFolder() {
@@ -27,6 +30,15 @@ public class DashLoaderManager implements DashLoaderAPI {
 
 	public Path getSystemCacheFolder() {
 		return systemCacheFolder;
+	}
+
+
+	public static DashLoaderManager getInstance() {
+		return instance;
+	}
+
+	public ThreadManager getThreadManager() {
+		return threadManager;
 	}
 
 	/**
