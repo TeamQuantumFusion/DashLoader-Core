@@ -16,7 +16,7 @@ public class ThreadManager {
 	private ForkJoinPool dashExecutionPool;
 
 	public void init() {
-		dashExecutionPool = new ForkJoinPool(4, new ForkJoinPool.ForkJoinWorkerThreadFactory() {
+		dashExecutionPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors(), new ForkJoinPool.ForkJoinWorkerThreadFactory() {
 			private final AtomicInteger threadNumber = new AtomicInteger(1);
 
 			@Override
@@ -26,7 +26,10 @@ public class ThreadManager {
 				dashThread.setName("dashloaderc-thread-" + threadNumber.getAndIncrement());
 				return dashThread;
 			}
-		}, null, true);
+		}, (t, e) -> {
+			System.out.println(t.getName() + " failed, ERROR: " + e.getMessage());
+			e.printStackTrace();
+		}, true);
 	}
 
 	public <F, D extends Dashable<F>> void parallelToUndash(DashRegistry registry, D[] dashArray, F[] outputArray) {
