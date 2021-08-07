@@ -76,18 +76,18 @@ public class ThreadManager {
 		@Override
 		protected void compute() {
 			final int size = stop - start;
-			if (size <= THRESHOLD) {
+			if (size < THRESHOLD) {
 				computeTask();
 			} else {
 				final int middle = start + (size / 2);
-				final UndashTask<D, F> alpha = new UndashTask<>(registry, start, middle - 1, startArray, outputArray);
+				final UndashTask<D, F> alpha = new UndashTask<>(registry, start, middle, startArray, outputArray);
 				final UndashTask<D, F> beta = new UndashTask<>(registry, middle, stop, startArray, outputArray);
 				invokeAll(alpha, beta);
 			}
 		}
 
 		private void computeTask() {
-			for (int i = start; i <= stop; i++)
+			for (int i = start; i < stop; i++)
 				outputArray[i] = startArray[i].toUndash(registry);
 		}
 	}
@@ -115,18 +115,18 @@ public class ThreadManager {
 		@Override
 		protected void compute() {
 			final int size = stop - start;
-			if (size <= THRESHOLD) {
+			if (size < THRESHOLD) {
 				computeTask();
 			} else {
 				final int middle = start + (size / 2);
-				final ApplyTask<D> alpha = new ApplyTask<>(registry, start, middle - 1, startArray);
+				final ApplyTask<D> alpha = new ApplyTask<>(registry, start, middle, startArray);
 				final ApplyTask<D> beta = new ApplyTask<>(registry, middle, stop, startArray);
 				invokeAll(alpha, beta);
 			}
 		}
 
 		private void computeTask() {
-			for (int i = start; i <= stop; i++)
+			for (int i = start; i < stop; i++)
 				startArray[i].apply(registry);
 		}
 	}
