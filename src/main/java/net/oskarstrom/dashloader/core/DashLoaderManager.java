@@ -2,8 +2,9 @@ package net.oskarstrom.dashloader.core;
 
 import net.oskarstrom.dashloader.api.DashLoaderAPI;
 import net.oskarstrom.dashloader.api.registry.RegistryStorage;
+import net.oskarstrom.dashloader.api.serializer.DashSerializerManager;
 import net.oskarstrom.dashloader.core.registry.DashRegistryImpl;
-import net.oskarstrom.dashloader.core.serializer.DashSerializerManager;
+import net.oskarstrom.dashloader.core.serializer.DashSerializerManagerImpl;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -14,8 +15,8 @@ public class DashLoaderManager implements DashLoaderAPI {
 	private final Path dataCacheFolder;
 	private final Path systemCacheFolder;
 
+	private final DashSerializerManager serializerManager = new DashSerializerManagerImpl(this);
 	private final DashRegistryImpl registry = new DashRegistryImpl();
-	private final DashSerializerManager serializerManager = new DashSerializerManager(this);
 	private final ThreadManager threadManager = new ThreadManager();
 
 	public DashLoaderManager(Path dataCacheFolder, Path systemCacheFolder) {

@@ -4,6 +4,7 @@ import io.activej.codegen.ClassBuilder;
 import io.activej.serializer.BinarySerializer;
 import io.activej.serializer.CompatibilityLevel;
 import io.activej.serializer.SerializerBuilder;
+import net.oskarstrom.dashloader.api.serializer.DashSerializerManager;
 import net.oskarstrom.dashloader.core.DashLoaderManager;
 import net.oskarstrom.dashloader.core.util.ClassLoaderHelper;
 import net.oskarstrom.dashloader.core.util.PathConstants;
@@ -16,17 +17,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-public class DashSerializerManager {
+public class DashSerializerManagerImpl implements DashSerializerManager {
 	private final DashLoaderManager loaderManager;
 	private final SerializerMap<?> serializers = new SerializerMap<>(new HashMap<>());
 	private final Map<String, Set<Class<?>>> subclasses = new HashMap<>();
 
-	public DashSerializerManager(DashLoaderManager loaderManager) {
+	public DashSerializerManagerImpl(DashLoaderManager loaderManager) {
 		this.loaderManager = loaderManager;
 	}
 
 	@NotNull
-	public <T> DashSerializer<T> getSerializer(Class<T> klazz) {
+	@Override
+	public <T> DashSerializerImpl<T> getSerializer(Class<T> klazz) {
 		//noinspection unchecked
 		var serializer = ((SerializerMap<T>) serializers).get(klazz);
 		if (serializer == null)
@@ -34,9 +36,9 @@ public class DashSerializerManager {
 		return serializer;
 	}
 
-	public <T> DashSerializer<T> loadOrCreateSerializer(String serializerName, Class<T> klazz, String... keys) {
+	@Override
+	public <T> void loadOrCreateSerializer(String serializerName, Class<T> klazz, String... keys) {
 		BinarySerializer<T> serializer;
-		//TODO: store this in `serializers` and stuff
 		try {
 			//noinspection unchecked
 			Class<BinarySerializer<T>> klaz = (Class<BinarySerializer<T>>) ClassLoaderHelper.findClass(getSerializerFqcn(serializerName));
@@ -50,9 +52,9 @@ public class DashSerializerManager {
 				serializer = createSerializer(serializerName, klazz, keys);
 			}
 		}
-		return new DashSerializer<>(serializerName, serializer);
-
-
+		final DashSerializerImpl<T> dashSerializer = new DashSerializerImpl<>(serializerName, serializer);
+		//noinspection unchecked
+		((SerializerMap<T>) serializers).put(klazz, dashSerializer);
 	}
 
 	private <T> BinarySerializer<T> loadSerializer(String serializerName) {
@@ -74,6 +76,7 @@ public class DashSerializerManager {
 	private <T> BinarySerializer<T> createSerializer(String serializerName, Class<T> klazz, String... keys) {
 		SerializerBuilder builder = SerializerBuilder.create()
 				.withClassName(serializerName)
+				.withGeneratedBytecodePath(loaderManager.getSystemCacheFolder().resolve(serializerName + PathConstants.CACHE_EXTENSION))
 				.withCompatibilityLevel(CompatibilityLevel.LEVEL_3_LE);
 		for (String key : keys) {
 			final var set = subclasses.get(key);
@@ -113,17 +116,17 @@ public class DashSerializerManager {
 		}
 	}
 
-	private static class SerializerMap<T> extends AbstractMap<Class<T>, DashSerializer<T>> {
+	private static class SerializerMap<T> extends AbstractMap<Class<T>, DashSerializerImpl<T>> {
 
-		private final Map<Class<T>, DashSerializer<T>> delegate;
+		private final Map<Class<T>, DashSerializerImpl<T>> delegate;
 
-		private SerializerMap(Map<Class<T>, DashSerializer<T>> delegate) {
+		private SerializerMap(Map<Class<T>, DashSerializerImpl<T>> delegate) {
 			this.delegate = delegate;
 		}
 
 		@NotNull
 		@Override
-		public Set<Entry<Class<T>, DashSerializer<T>>> entrySet() {
+		public Set<Entry<Class<T>, DashSerializerImpl<T>>> entrySet() {
 			return delegate.entrySet();
 		}
 	}
