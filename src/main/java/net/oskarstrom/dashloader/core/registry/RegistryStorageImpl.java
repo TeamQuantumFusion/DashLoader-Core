@@ -9,7 +9,7 @@ import net.oskarstrom.dashloader.api.registry.FactoryConstructor;
 import net.oskarstrom.dashloader.api.registry.RegistryStorage;
 import net.oskarstrom.dashloader.core.DashLoaderManager;
 
-public abstract class RegistryStorageImpl<F, D extends Dashable<F>> implements RegistryStorage<F>, Dashable<F[]> {
+public abstract class RegistryStorageImpl<F, D extends Dashable<F>> implements RegistryStorage<F> {
 	private final Object2IntMap<F> deduplicationMap = new Object2IntOpenHashMap<>();
 	private final DashRegistry registry;
 	private final F[] unDashedObjects; // bound to F

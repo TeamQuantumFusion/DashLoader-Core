@@ -1,6 +1,8 @@
 package net.oskarstrom.dashloader.api.registry;
 
-public interface DashRegistry {
+import net.oskarstrom.dashloader.api.Applyable;
+
+public interface DashRegistry extends Applyable {
 	<F> Pointer add(F object);
 
 	<F> F get(Pointer pointer);

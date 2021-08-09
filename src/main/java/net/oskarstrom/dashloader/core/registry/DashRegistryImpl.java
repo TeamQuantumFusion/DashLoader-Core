@@ -16,8 +16,17 @@ import java.util.function.Consumer;
 public class DashRegistryImpl implements DashRegistry {
 	private final PairMap<Byte, Consumer<RegistryStorage<?>>> registryReturns = new PairMap<>();
 	private final Object2ByteMap<Class<?>> storageMappings = new Object2ByteOpenHashMap<>();
-	private final List<RegistryStorage<?>> storages = new ArrayList<>();
+	private final List<RegistryStorage<?>> storages;
 	private final Set<Class<?>> apiFailed = new HashSet<>();
+
+
+	public DashRegistryImpl() {
+		this.storages = new ArrayList<>();
+	}
+
+	public DashRegistryImpl(List<RegistryStorage<?>> storages) {
+		this.storages = storages;
+	}
 
 	@Override
 	public <F> Pointer add(F object) {
@@ -56,5 +65,15 @@ public class DashRegistryImpl implements DashRegistry {
 		}
 		//noinspection unchecked
 		return (F) registryStorage.get(pointer.objectPointer);
+	}
+
+	@Override
+	public void apply(DashRegistry registry) {
+		for (var storage : storages)
+			storage.toUndash(registry);
+
+		for (var registryReturn : registryReturns)
+			registryReturn.value.accept(storages.get(registryReturn.key));
+
 	}
 }

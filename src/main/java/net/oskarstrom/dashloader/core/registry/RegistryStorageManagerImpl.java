@@ -6,16 +6,17 @@ import net.oskarstrom.dashloader.api.Dashable;
 import net.oskarstrom.dashloader.api.registry.DashRegistry;
 import net.oskarstrom.dashloader.api.registry.FactoryConstructor;
 import net.oskarstrom.dashloader.api.registry.RegistryStorage;
+import net.oskarstrom.dashloader.api.registry.RegistryStorageManager;
 import org.jetbrains.annotations.NotNull;
 
-public class RegistryStorageManager {
+public class RegistryStorageManagerImpl implements RegistryStorageManager {
 
 
-	public static <F, D extends Dashable<F>> RegistryStorage<F> createSimpleRegistry(Class<F> rawClass, Class<D> dashClass, DashRegistry registry) {
+	public <F, D extends Dashable<F>> RegistryStorage<F> createSimpleRegistry(Class<F> rawClass, Class<D> dashClass, DashRegistry registry) {
 		return new RegistryStorageImpl.SimpleRegistryImpl<>(getConstructor(rawClass, dashClass), registry);
 	}
 
-	public static <F, D extends Dashable<F>> RegistryStorage<F> createMultiRegistry(Object2ObjectMap<Class<F>, Class<D>> classes, DashRegistry registry) {
+	public <F, D extends Dashable<F>> RegistryStorage<F> createMultiRegistry(Object2ObjectMap<Class<F>, Class<D>> classes, DashRegistry registry) {
 		Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> constructors = new Object2ObjectOpenHashMap<>((int) (classes.size() / 0.75f));
 		for (var rawDashEntry : classes.entrySet()) {
 			constructors.put(rawDashEntry.getKey(), getConstructor(rawDashEntry.getKey(), rawDashEntry.getValue()));
@@ -24,7 +25,7 @@ public class RegistryStorageManager {
 	}
 
 	@NotNull
-	private static <F, D extends Dashable<F>> FactoryConstructor<F, D> getConstructor(Class<F> rawClass, Class<D> dashClass) {
+	private <F, D extends Dashable<F>> FactoryConstructor<F, D> getConstructor(Class<F> rawClass, Class<D> dashClass) {
 		try {
 			return FactoryConstructorImpl.createConstructor(rawClass, dashClass);
 			//TODO error handling
