@@ -2,11 +2,12 @@ package net.oskarstrom.dashloader.core.util;
 
 import net.oskarstrom.dashloader.api.registry.DashRegistry;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class DashHelper {
 
@@ -24,40 +25,65 @@ public class DashHelper {
 		return nullable(input, i -> i);
 	}
 
-	public static <I, O> Collection<O> convertCollection(Collection<I> in, Function<I, O> func, Supplier<Collection<O>> createFunc) {
-		Collection<O> temp = createFunc.get();
-		for (I o : in) {
-			temp.add(func.apply(o));
-		}
-		in.clear();
-		return temp;
+
+	public static <I, O> Collection<O> convertCollection(Collection<I> in, Function<I, O> func) {
+		return convertCollection(in, new ArrayList<>(), func);
+	}
+
+	public static <I, OK, OV> Map<OK, OV> convertCollectionToMap(Collection<I> in, Function<I, Map.Entry<OK, OV>> func) {
+		return convertCollectionToMap(in, new HashMap<>(), func);
+	}
+
+	public static <IK, IV, OK, OV> Map<OK, OV> convertMap(Map<IK, IV> in, Function<Map.Entry<IK, IV>, Map.Entry<OK, OV>> func) {
+		return convertMap(in, new HashMap<>(), func);
+	}
+
+	public static <I, O> O[] convertArrays(I[] in, Function<I, O> func) {
+		//noinspection unchecked
+		return convertArrays(in, (O[]) new Object[in.length], func);
+	}
+
+	public static <IK, IV, O> Collection<O> convertMapToCollection(Map<IK, IV> in, Function<Map.Entry<IK, IV>, O> func) {
+		return convertMapToCollection(in, new ArrayList<>(), func);
 	}
 
 
-	public static <I, OK, OV> Map<OK, OV> convertCollectionToMap(Collection<I> in, Function<I, Map.Entry<OK, OV>> func, Supplier<Map<OK, OV>> createFunc) {
-		Map<OK, OV> temp = createFunc.get();
-		for (I o : in) {
-			final Map.Entry<OK, OV> apply = func.apply(o);
-			temp.put(apply.getKey(), apply.getValue());
+	public static <I, O> Collection<O> convertCollection(Collection<I> in, Collection<O> out, Function<I, O> func) {
+		for (var o : in) {
+			out.add(func.apply(o));
 		}
-		in.clear();
-		return temp;
+		return out;
+	}
+
+	public static <I, OK, OV> Map<OK, OV> convertCollectionToMap(Collection<I> in, Map<OK, OV> out, Function<I, Map.Entry<OK, OV>> func) {
+		for (var o : in) {
+			final var apply = func.apply(o);
+			out.put(apply.getKey(), apply.getValue());
+		}
+		return out;
+	}
+
+	public static <IK, IV, OK, OV> Map<OK, OV> convertMap(Map<IK, IV> in, Map<OK, OV> out, Function<Map.Entry<IK, IV>, Map.Entry<OK, OV>> func) {
+		for (var entry : in.entrySet()) {
+			final var apply = func.apply(entry);
+			out.put(apply.getKey(), apply.getValue());
+		}
+		return out;
 	}
 
 
-	public static <IK, IV, O> Collection<O> convertMapToCollection(Map<IK, IV> in, Function<Map.Entry<IK, IV>, O> func, Supplier<Collection<O>> createFunc) {
-		Collection<O> temp = createFunc.get();
-		for (var ikivEntry : in.entrySet()) {
-			temp.add(func.apply(ikivEntry));
+	public static <IK, IV, O> Collection<O> convertMapToCollection(Map<IK, IV> in, Collection<O> out, Function<Map.Entry<IK, IV>, O> func) {
+		for (var entry : in.entrySet()) {
+			out.add(func.apply(entry));
 		}
-		in.clear();
-		return temp;
+		return out;
 	}
 
-	public static <V, OV> void convertArrays(V[] in, OV[] out, Function<V, OV> func) {
+	public static <I, O> O[] convertArrays(I[] in, O[] out, Function<I, O> func) {
 		for (int i = 0; i < in.length; i++) {
 			out[i] = func.apply(in[i]);
 		}
+		return out;
 	}
 
 
