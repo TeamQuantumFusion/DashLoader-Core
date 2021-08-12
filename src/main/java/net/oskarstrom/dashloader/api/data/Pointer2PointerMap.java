@@ -19,17 +19,17 @@ public class Pointer2PointerMap extends DashMap<Pointer2PointerMap.Entry> {
 
 	public static class Entry {
 		@Serialize(order = 0)
-		public final int key;
+		public final Pointer key;
 		@Serialize(order = 1)
-		public final int value;
+		public final Pointer value;
 
-		public Entry(@Deserialize("key") int key,
-					 @Deserialize("value") int value) {
+		public Entry(@Deserialize("key") Pointer key,
+					 @Deserialize("value") Pointer value) {
 			this.key = key;
 			this.value = value;
 		}
 
-		public static Entry of(int key, int value) {
+		public static Entry of(Pointer key, Pointer value) {
 			return new Entry(key, value);
 		}
 
