@@ -2,6 +2,7 @@ package net.oskarstrom.dashloader.api.data;
 
 import io.activej.serializer.annotations.Deserialize;
 import io.activej.serializer.annotations.Serialize;
+import net.oskarstrom.dashloader.api.registry.Pointer;
 
 import java.util.List;
 
