@@ -10,27 +10,25 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class DashSerializerImpl<O> implements DashSerializer<O> {
-	private final String name;
+	public final String name;
+	public final Path startingPath;
 	private final BinarySerializer<O> serializer;
 
-	public DashSerializerImpl(String name, BinarySerializer<O> serializer) {
+	public DashSerializerImpl(String name, BinarySerializer<O> serializer, Path startingPath) {
 		this.name = name;
 		this.serializer = serializer;
-	}
-
-	public String getName() {
-		return name;
+		this.startingPath = startingPath;
 	}
 
 	@Override
-	public O deserialize(Path path) throws IOException {
-		final byte[] bytes = Files.readAllBytes(path);
+	public O deserialize(String path) throws IOException {
+		final byte[] bytes = Files.readAllBytes(startingPath.resolve(path));
 		return serializer.decode(bytes, 0);
 	}
 
 	@Override
-	public void serialize(Path path, O object) throws IOException {
-		final OutputStream output = Files.newOutputStream(path);
+	public void serialize(String path, O object) throws IOException {
+		final OutputStream output = Files.newOutputStream(startingPath.resolve(path));
 		final StreamOutput streamOutput = StreamOutput.create(output);
 		streamOutput.serialize(serializer, object);
 		streamOutput.close();

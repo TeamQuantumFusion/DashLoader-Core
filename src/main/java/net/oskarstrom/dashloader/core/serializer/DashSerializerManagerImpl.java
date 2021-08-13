@@ -37,7 +37,7 @@ public class DashSerializerManagerImpl implements DashSerializerManager {
 	}
 
 	@Override
-	public <T> void loadOrCreateSerializer(String serializerName, Class<T> klazz, String... keys) {
+	public <T> void loadOrCreateSerializer(String serializerName, Class<T> klazz, Path startingPath, String... keys) {
 		BinarySerializer<T> serializer;
 		try {
 			//noinspection unchecked
@@ -52,7 +52,7 @@ public class DashSerializerManagerImpl implements DashSerializerManager {
 				serializer = createSerializer(serializerName, klazz, keys);
 			}
 		}
-		final DashSerializerImpl<T> dashSerializer = new DashSerializerImpl<>(serializerName, serializer);
+		final DashSerializerImpl<T> dashSerializer = new DashSerializerImpl<>(serializerName, serializer, startingPath);
 		//noinspection unchecked
 		((SerializerMap<T>) serializers).put(klazz, dashSerializer);
 	}
