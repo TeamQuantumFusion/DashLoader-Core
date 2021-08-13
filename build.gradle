@@ -5,6 +5,7 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
+
 }
 
 group 'net.oskarstrom.dashloader'
@@ -12,6 +13,11 @@ version '3.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
 dependencies {
