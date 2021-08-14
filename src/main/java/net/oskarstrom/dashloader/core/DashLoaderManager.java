@@ -11,7 +11,6 @@ import net.oskarstrom.dashloader.core.serializer.DashSerializerManagerImpl;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class DashLoaderManager implements DashLoaderAPI {
 	private static DashLoaderManager instance;
@@ -58,18 +57,5 @@ public class DashLoaderManager implements DashLoaderAPI {
 		return registry;
 	}
 
-	/**
-	 * Use this to register a custom registry for deduplication of objects.
-	 *
-	 * @param mappings A list of classes that will be redirected to a Registries {@link RegistryStorage#add(Object)}
-	 * @param storage  The {@link RegistryStorage} you are registering
-	 * @param consumer After the caching step has been complete this will be run (used mostly for putting it in a data object and serializing it)
-	 * @param <F>      The type of classes the registry holds.
-	 */
-	@Override
-	public <F> void registerRegistry(List<Class<F>> mappings, RegistryStorage<F> storage, Consumer<RegistryStorage<?>> consumer) {
-		final byte pointer = registry.addStorage(storage);
-		mappings.forEach(fClass -> registry.addMapping(fClass, pointer));
-		registry.addReturn(pointer, consumer);
-	}
+
 }
