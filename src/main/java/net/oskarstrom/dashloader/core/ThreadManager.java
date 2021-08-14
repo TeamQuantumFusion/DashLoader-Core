@@ -5,9 +5,10 @@ import net.oskarstrom.dashloader.api.Dashable;
 import net.oskarstrom.dashloader.api.registry.DashRegistry;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinWorkerThread;
-import java.util.concurrent.RecursiveAction;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ThreadManager {
@@ -36,6 +37,24 @@ public class ThreadManager {
 		ensureReadyForExecution();
 		//noinspection ConstantConditions
 		dashExecutionPool.invoke(new UndashTask<>(registry, dashArray, outputArray));
+	}
+
+	public <O, C extends Callable<O>> List<O> executeCallables(Collection<C> callables) throws ExecutionException, InterruptedException {
+		ensureReadyForExecution();
+		//noinspection ConstantConditions
+		final List<Future<O>> futures = dashExecutionPool.invokeAll(callables);
+		List<O> output = new ArrayList<>();
+		for (Future<O> future : futures)
+			output.add(future.get());
+		return output;
+	}
+
+	public <R extends Runnable> void executeRunnables(Collection<R> runnables) throws ExecutionException, InterruptedException {
+		ensureReadyForExecution();
+		//noinspection ConstantConditions
+		final List<Future<Object>> futures = dashExecutionPool.invokeAll(runnables.stream().map(Executors::callable).toList());
+		for (Future<Object> future : futures)
+			future.get();
 	}
 
 	public <D extends Applyable> void parallelApply(DashRegistry registry, D[] applyArray) {
