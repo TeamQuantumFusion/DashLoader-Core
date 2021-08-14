@@ -90,6 +90,18 @@ public abstract class RegistryStorageImpl<F, D extends Dashable<F>> implements R
 		}
 	}
 
+	static class SupplierRegistryImpl<F, D extends Dashable<F>> extends RegistryStorageImpl<F, D> {
+
+		public SupplierRegistryImpl(DashRegistry registry, D[] data) {
+			super(registry, data);
+		}
+
+		@Override
+		public D create(F object, DashRegistry registry) {
+			throw new UnsupportedOperationException("This registry is purely for Deserialization");
+		}
+	}
+
 	static class FactoryRegistryImpl<F, D extends Dashable<F>> extends RegistryStorageImpl<F, D> {
 		private final Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> constructor;
 

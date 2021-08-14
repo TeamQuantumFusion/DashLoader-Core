@@ -16,6 +16,11 @@ public class RegistryStorageManagerImpl implements RegistryStorageManager {
 		return new RegistryStorageImpl.SimpleRegistryImpl<>(getConstructor(rawClass, dashClass), registry);
 	}
 
+
+	public <F, D extends Dashable<F>> RegistryStorage<F> createSupplierRegistry(D[] data, DashRegistry registry) {
+		return new RegistryStorageImpl.SupplierRegistryImpl<>(registry, data);
+	}
+
 	public <F, D extends Dashable<F>> RegistryStorage<F> createMultiRegistry(Object2ObjectMap<Class<F>, Class<D>> classes, DashRegistry registry) {
 		Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> constructors = new Object2ObjectOpenHashMap<>((int) (classes.size() / 0.75f));
 		for (var rawDashEntry : classes.entrySet()) {
