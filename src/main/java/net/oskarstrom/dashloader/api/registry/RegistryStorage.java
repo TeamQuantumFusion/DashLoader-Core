@@ -6,4 +6,6 @@ public interface RegistryStorage<F> extends Dashable<F[]> {
 	int add(F object);
 
 	F get(int pointer);
+
+	Dashable<F>[] getDashables();
 }
