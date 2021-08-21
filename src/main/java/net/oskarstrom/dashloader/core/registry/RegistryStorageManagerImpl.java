@@ -9,7 +9,7 @@ import net.oskarstrom.dashloader.api.registry.RegistryStorage;
 import net.oskarstrom.dashloader.api.registry.RegistryStorageManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 public class RegistryStorageManagerImpl implements RegistryStorageManager {
@@ -24,7 +24,7 @@ public class RegistryStorageManagerImpl implements RegistryStorageManager {
 		return new RegistryStorageImpl.SupplierRegistryImpl<>(registry, data);
 	}
 
-	public <F, D extends Dashable<F>> RegistryStorage<F> createMultiRegistry(DashRegistry registry, List<Map.Entry<Class<? extends F>, Class<? extends D>>> classes) {
+	public <F, D extends Dashable<F>> RegistryStorage<F> createMultiRegistry(DashRegistry registry, Collection<Map.Entry<Class<? extends F>, Class<? extends D>>> classes) {
 		Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> constructors = new Object2ObjectOpenHashMap<>((int) (classes.size() / 0.75f));
 		for (var rawDashEntry : classes) {
 			//noinspection unchecked

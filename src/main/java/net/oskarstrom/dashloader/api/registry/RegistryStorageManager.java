@@ -2,7 +2,7 @@ package net.oskarstrom.dashloader.api.registry;
 
 import net.oskarstrom.dashloader.api.Dashable;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 public interface RegistryStorageManager {
@@ -10,5 +10,5 @@ public interface RegistryStorageManager {
 
 	<F, D extends Dashable<F>> RegistryStorage<F> createSupplierRegistry(DashRegistry registry, D[] data);
 
-	<F, D extends Dashable<F>> RegistryStorage<F> createMultiRegistry(DashRegistry registry, List<Map.Entry<Class<? extends F>, Class<? extends D>>> classes);
+	<F, D extends Dashable<F>> RegistryStorage<F> createMultiRegistry(DashRegistry registry, Collection<Map.Entry<Class<? extends F>, Class<? extends D>>> classes);
 }
