@@ -1,12 +1,14 @@
 package net.oskarstrom.dashloader.api.registry;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.oskarstrom.dashloader.api.Dashable;
 
+import java.util.List;
+import java.util.Map;
+
 public interface RegistryStorageManager {
-	<F, D extends Dashable<F>> RegistryStorage<F> createSimpleRegistry(Class<F> rawClass, Class<D> dashClass, DashRegistry registry);
+	<F, D extends Dashable<F>> RegistryStorage<F> createSimpleRegistry(DashRegistry registry, Class<F> rawClass, Class<D> dashClass);
 
-	<F, D extends Dashable<F>> RegistryStorage<F> createSupplierRegistry(D[] data, DashRegistry registry);
+	<F, D extends Dashable<F>> RegistryStorage<F> createSupplierRegistry(DashRegistry registry, D[] data);
 
-	<F, D extends Dashable<F>> RegistryStorage<F> createMultiRegistry(Object2ObjectMap<Class<F>, Class<D>> classes, DashRegistry registry);
+	<FI, DI extends Dashable<FI>, F extends FI, D extends DI> RegistryStorage<FI> createMultiRegistry(DashRegistry registry, List<Map.Entry<Class<F>, Class<D>>> classes);
 }
