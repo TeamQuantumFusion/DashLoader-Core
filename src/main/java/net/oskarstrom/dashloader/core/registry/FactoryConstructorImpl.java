@@ -18,7 +18,7 @@ public class FactoryConstructorImpl<F, D extends Dashable<F>> implements Factory
 		this.mode = mode;
 	}
 
-	public static <FI, DI extends Dashable<FI>, F extends FI, D extends DI> FactoryConstructor<FI, DI> createConstructor(Class<F> rawClass, Class<D> dashClass) throws IllegalAccessException, NoSuchMethodException {
+	public static <F, D extends Dashable<F>> FactoryConstructor<F, D> createConstructor(Class<? extends F> rawClass, Class<? extends D> dashClass) throws IllegalAccessException, NoSuchMethodException {
 		for (Mode value : Mode.values()) {
 			final Class<?>[] parameters = value.getParameters(rawClass);
 			try {

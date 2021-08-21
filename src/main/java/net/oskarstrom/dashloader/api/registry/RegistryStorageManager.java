@@ -10,5 +10,5 @@ public interface RegistryStorageManager {
 
 	<F, D extends Dashable<F>> RegistryStorage<F> createSupplierRegistry(DashRegistry registry, D[] data);
 
-	<FI, DI extends Dashable<FI>, F extends FI, D extends DI> RegistryStorage<FI> createMultiRegistry(DashRegistry registry, List<Map.Entry<Class<F>, Class<D>>> classes);
+	<F, D extends Dashable<F>> RegistryStorage<F> createMultiRegistry(DashRegistry registry, List<Map.Entry<Class<? extends F>, Class<? extends D>>> classes);
 }

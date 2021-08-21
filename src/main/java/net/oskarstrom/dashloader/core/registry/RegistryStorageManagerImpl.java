@@ -24,23 +24,21 @@ public class RegistryStorageManagerImpl implements RegistryStorageManager {
 		return new RegistryStorageImpl.SupplierRegistryImpl<>(registry, data);
 	}
 
-	public <FI, DI extends Dashable<FI>, F extends FI, D extends DI> RegistryStorage<FI> createMultiRegistry(DashRegistry registry, List<Map.Entry<Class<F>, Class<D>>> classes) {
-		Object2ObjectMap<Class<FI>, FactoryConstructor<FI, DI>> constructors = new Object2ObjectOpenHashMap<>((int) (classes.size() / 0.75f));
+	public <F, D extends Dashable<F>> RegistryStorage<F> createMultiRegistry(DashRegistry registry, List<Map.Entry<Class<? extends F>, Class<? extends D>>> classes) {
+		Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> constructors = new Object2ObjectOpenHashMap<>((int) (classes.size() / 0.75f));
 		for (var rawDashEntry : classes) {
 			//noinspection unchecked
-			constructors.put((Class<FI>) rawDashEntry.getKey(), getConstructor(rawDashEntry.getKey(), rawDashEntry.getValue()));
+			constructors.put((Class<F>) rawDashEntry.getKey(), getConstructor(rawDashEntry.getKey(), rawDashEntry.getValue()));
 		}
 		return new RegistryStorageImpl.FactoryRegistryImpl<>(constructors, registry);
 	}
 
 	@NotNull
-	private <FI, DI extends Dashable<FI>, F extends FI, D extends DI> FactoryConstructor<FI, DI> getConstructor(Class<F> rawClass, Class<D> dashClass) {
+	private <F, D extends Dashable<F>> FactoryConstructor<F, D> getConstructor(Class<? extends F> rawClass, Class<? extends D> dashClass) {
 		try {
 			return FactoryConstructorImpl.createConstructor(rawClass, dashClass);
 			//TODO error handling
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
+		} catch (IllegalAccessException | NoSuchMethodException e) {
 			e.printStackTrace();
 		}
 		return null;
