@@ -4,7 +4,8 @@ import io.activej.serializer.annotations.Deserialize;
 import io.activej.serializer.annotations.Serialize;
 import net.oskarstrom.dashloader.api.Dashable;
 
-public class RegistryStorageData<F, D extends Dashable<F>> {
+@SuppressWarnings("rawtypes") //shh
+public class RegistryStorageData<D extends Dashable> {
 	@Serialize(order = 0)
 	public final D[] dashables;
 	@Serialize(order = 1)
