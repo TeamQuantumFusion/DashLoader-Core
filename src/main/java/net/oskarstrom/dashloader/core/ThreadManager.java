@@ -6,7 +6,7 @@ import net.oskarstrom.dashloader.api.registry.DashRegistry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,7 +39,11 @@ public class ThreadManager {
 		dashExecutionPool.invoke(new UndashTask<>(registry, dashArray, outputArray));
 	}
 
-	public <O, C extends Callable<O>> List<O> executeCallables(Collection<C> callables) throws ExecutionException, InterruptedException {
+	public <O, C extends Callable<O>> List<O> executeCallables(C... callables) throws ExecutionException, InterruptedException {
+		return executeCallables(Arrays.stream(callables).toList());
+	}
+
+	public <O, C extends Callable<O>> List<O> executeCallables(List<C> callables) throws ExecutionException, InterruptedException {
 		ensureReadyForExecution();
 		//noinspection ConstantConditions
 		final List<Future<O>> futures = dashExecutionPool.invokeAll(callables);
@@ -49,7 +53,12 @@ public class ThreadManager {
 		return output;
 	}
 
-	public <R extends Runnable> void executeRunnables(Collection<R> runnables) throws ExecutionException, InterruptedException {
+
+	public <R extends Runnable> void executeRunnables(R... runnables) throws ExecutionException, InterruptedException {
+		executeRunnables(Arrays.stream(runnables).toList());
+	}
+
+	public <R extends Runnable> void executeRunnables(List<R> runnables) throws ExecutionException, InterruptedException {
 		ensureReadyForExecution();
 		//noinspection ConstantConditions
 		final List<Future<Object>> futures = dashExecutionPool.invokeAll(runnables.stream().map(Executors::callable).toList());
