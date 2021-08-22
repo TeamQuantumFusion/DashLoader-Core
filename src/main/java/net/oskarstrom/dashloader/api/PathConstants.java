@@ -1,4 +1,4 @@
-package net.oskarstrom.dashloader.core.util;
+package net.oskarstrom.dashloader.api;
 
 public final class PathConstants {
     /**

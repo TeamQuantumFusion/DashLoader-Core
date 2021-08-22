@@ -9,7 +9,9 @@ public interface DashRegistry extends Applyable {
 
 	byte addStorage(RegistryStorage<?> registryStorage);
 
-	RegistryStorage<?> getStorage(byte registryPointer);
+	RegistryStorageData<?, ?> getStorageData(byte registryPointer);
 
 	void addMapping(Class<?> clazz, byte registryPointer);
+
+	int getSize();
 }

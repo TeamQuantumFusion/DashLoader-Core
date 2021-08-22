@@ -1,7 +1,5 @@
-package net.oskarstrom.dashloader.core;
+package net.oskarstrom.dashloader.api;
 
-import net.oskarstrom.dashloader.api.Applyable;
-import net.oskarstrom.dashloader.api.Dashable;
 import net.oskarstrom.dashloader.api.registry.DashRegistry;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,9 +12,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ThreadManager {
 	private static final int THRESHOLD = 100;
 	@Nullable
-	private ForkJoinPool dashExecutionPool;
+	private static ForkJoinPool dashExecutionPool;
 
-	public void init() {
+	public static void init() {
 		dashExecutionPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors(), new ForkJoinPool.ForkJoinWorkerThreadFactory() {
 			private final AtomicInteger threadNumber = new AtomicInteger(1);
 
@@ -33,17 +31,17 @@ public class ThreadManager {
 		}, true);
 	}
 
-	public <F, D extends Dashable<F>> void parallelToUndash(DashRegistry registry, D[] dashArray, F[] outputArray) {
+	public static <F, D extends Dashable<F>> void parallelToUndash(DashRegistry registry, D[] dashArray, F[] outputArray) {
 		ensureReadyForExecution();
 		//noinspection ConstantConditions
 		dashExecutionPool.invoke(new UndashTask<>(registry, dashArray, outputArray));
 	}
 
-	public <O, C extends Callable<O>> List<O> executeCallables(C... callables) throws ExecutionException, InterruptedException {
+	public static <O, C extends Callable<O>> List<O> executeCallables(C... callables) throws ExecutionException, InterruptedException {
 		return executeCallables(Arrays.stream(callables).toList());
 	}
 
-	public <O, C extends Callable<O>> List<O> executeCallables(List<C> callables) throws ExecutionException, InterruptedException {
+	public static <O, C extends Callable<O>> List<O> executeCallables(List<C> callables) throws ExecutionException, InterruptedException {
 		ensureReadyForExecution();
 		//noinspection ConstantConditions
 		final List<Future<O>> futures = dashExecutionPool.invokeAll(callables);
@@ -54,11 +52,11 @@ public class ThreadManager {
 	}
 
 
-	public <R extends Runnable> void executeRunnables(R... runnables) throws ExecutionException, InterruptedException {
+	public static <R extends Runnable> void executeRunnables(R... runnables) throws ExecutionException, InterruptedException {
 		executeRunnables(Arrays.stream(runnables).toList());
 	}
 
-	public <R extends Runnable> void executeRunnables(List<R> runnables) throws ExecutionException, InterruptedException {
+	public static <R extends Runnable> void executeRunnables(List<R> runnables) throws ExecutionException, InterruptedException {
 		ensureReadyForExecution();
 		//noinspection ConstantConditions
 		final List<Future<Object>> futures = dashExecutionPool.invokeAll(runnables.stream().map(Executors::callable).toList());
@@ -66,13 +64,13 @@ public class ThreadManager {
 			future.get();
 	}
 
-	public <D extends Applyable> void parallelApply(DashRegistry registry, D[] applyArray) {
+	public static <D extends Applyable> void parallelApply(DashRegistry registry, D[] applyArray) {
 		ensureReadyForExecution();
 		//noinspection ConstantConditions
 		dashExecutionPool.invoke(new ApplyTask<>(registry, applyArray));
 	}
 
-	private void ensureReadyForExecution() {
+	private static void ensureReadyForExecution() {
 		if (dashExecutionPool == null || dashExecutionPool.isTerminated()) {
 			throw new NullPointerException("ThreadPool not initialized");
 		}

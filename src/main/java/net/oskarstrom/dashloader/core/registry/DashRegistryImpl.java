@@ -2,9 +2,7 @@ package net.oskarstrom.dashloader.core.registry;
 
 import it.unimi.dsi.fastutil.objects.Object2ByteMap;
 import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
-import net.oskarstrom.dashloader.api.registry.DashRegistry;
-import net.oskarstrom.dashloader.api.registry.Pointer;
-import net.oskarstrom.dashloader.api.registry.RegistryStorage;
+import net.oskarstrom.dashloader.api.registry.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -21,8 +19,8 @@ public class DashRegistryImpl implements DashRegistry {
 		this.storages = new ArrayList<>();
 	}
 
-	public DashRegistryImpl(List<RegistryStorage<?>> storages) {
-		this.storages = storages;
+	public DashRegistryImpl(int size) {
+		this.storages = new ArrayList<>(size);
 	}
 
 	@Override
@@ -45,12 +43,21 @@ public class DashRegistryImpl implements DashRegistry {
 		return pos;
 	}
 
-	public RegistryStorage<?> getStorage(byte registryPointer) {
-		return storages.get(registryPointer);
+	public void addStorage(RegistryStorageData<?, ?> registryStorageData) {
+		storages.add(registryStorageData.registryPos, RegistryStorageFactory.createSupplierRegistry(this, registryStorageData.dashables));
+	}
+
+	public RegistryStorageData<?, ?> getStorageData(byte registryPointer) {
+		return new RegistryStorageData<>(storages.get(registryPointer).getDashables(), registryPointer);
 	}
 
 	public void addMapping(Class<?> clazz, byte registryPointer) {
 		storageMappings.put(clazz, registryPointer);
+	}
+
+	@Override
+	public int getSize() {
+		return storages.size();
 	}
 
 

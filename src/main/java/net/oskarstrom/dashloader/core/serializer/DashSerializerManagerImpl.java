@@ -4,10 +4,9 @@ import io.activej.codegen.ClassBuilder;
 import io.activej.serializer.BinarySerializer;
 import io.activej.serializer.CompatibilityLevel;
 import io.activej.serializer.SerializerBuilder;
+import net.oskarstrom.dashloader.api.PathConstants;
 import net.oskarstrom.dashloader.api.serializer.DashSerializerManager;
-import net.oskarstrom.dashloader.core.DashLoaderManager;
 import net.oskarstrom.dashloader.core.util.ClassLoaderHelper;
-import net.oskarstrom.dashloader.core.util.PathConstants;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -18,12 +17,12 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class DashSerializerManagerImpl implements DashSerializerManager {
-	private final DashLoaderManager loaderManager;
+	private final Path systemCacheFolder;
 	private final SerializerMap<?> serializers = new SerializerMap<>(new HashMap<>());
 	private final Map<String, Set<Class<?>>> subclasses = new HashMap<>();
 
-	public DashSerializerManagerImpl(DashLoaderManager loaderManager) {
-		this.loaderManager = loaderManager;
+	public DashSerializerManagerImpl(Path systemCacheFolder) {
+		this.systemCacheFolder = systemCacheFolder;
 	}
 
 	@NotNull
@@ -58,7 +57,7 @@ public class DashSerializerManagerImpl implements DashSerializerManager {
 	}
 
 	private <T> BinarySerializer<T> loadSerializer(String serializerName) {
-		Path path = loaderManager.getSystemCacheFolder().resolve(serializerName + PathConstants.CACHE_EXTENSION);
+		Path path = systemCacheFolder.resolve(serializerName + PathConstants.CACHE_EXTENSION);
 		if (!Files.exists(path))
 			return null;
 		try {
@@ -76,7 +75,7 @@ public class DashSerializerManagerImpl implements DashSerializerManager {
 	private <T> BinarySerializer<T> createSerializer(String serializerName, Class<T> klazz, String... keys) {
 		SerializerBuilder builder = SerializerBuilder.create()
 				.withClassName(serializerName)
-				.withGeneratedBytecodePath(loaderManager.getSystemCacheFolder().resolve(serializerName + PathConstants.CACHE_EXTENSION))
+				.withGeneratedBytecodePath(systemCacheFolder.resolve(serializerName + PathConstants.CACHE_EXTENSION))
 				.withCompatibilityLevel(CompatibilityLevel.LEVEL_3_LE);
 		for (String key : keys) {
 			final var set = subclasses.get(key);
