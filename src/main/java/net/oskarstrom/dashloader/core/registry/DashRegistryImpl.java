@@ -44,7 +44,8 @@ public class DashRegistryImpl implements DashRegistry {
 	}
 
 	public void addStorage(RegistryStorageData<?> registryStorageData) {
-		storages.add(registryStorageData.registryPos, RegistryStorageFactory.createSupplierRegistry(this, registryStorageData.dashables));
+		final RegistryStorage<?> supplierRegistry = RegistryStorageFactory.createSupplierRegistry(this, registryStorageData.getDashables());
+		storages.add(registryStorageData.registryPos, supplierRegistry);
 	}
 
 	public RegistryStorageData<?> getStorageData(byte registryPointer) {
