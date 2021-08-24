@@ -78,7 +78,7 @@ public class RegistryStorageFactory {
 
 		@Override
 		public D create(F object, DashRegistry registry) {
-			final FactoryConstructor<F, D> fdFactoryConstructor = constructor.get(object);
+			final FactoryConstructor<F, D> fdFactoryConstructor = constructor.get(object.getClass());
 			if (fdFactoryConstructor == null) {
 				//TODO error handling
 				throw new IllegalStateException();
