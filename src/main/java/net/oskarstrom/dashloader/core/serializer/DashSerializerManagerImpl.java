@@ -4,7 +4,6 @@ import io.activej.codegen.ClassBuilder;
 import io.activej.serializer.BinarySerializer;
 import io.activej.serializer.CompatibilityLevel;
 import io.activej.serializer.SerializerBuilder;
-import net.oskarstrom.dashloader.api.PathConstants;
 import net.oskarstrom.dashloader.api.serializer.DashSerializerManager;
 import net.oskarstrom.dashloader.core.util.ClassLoaderHelper;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +56,8 @@ public class DashSerializerManagerImpl implements DashSerializerManager {
 	}
 
 	private <T> BinarySerializer<T> loadSerializer(String serializerName) {
-		Path path = systemCacheFolder.resolve(serializerName + PathConstants.CACHE_EXTENSION);
+		//TODO change to dlc when activej merged my pr
+		Path path = systemCacheFolder.resolve(serializerName + ".class");
 		if (!Files.exists(path))
 			return null;
 		try {
@@ -75,7 +75,8 @@ public class DashSerializerManagerImpl implements DashSerializerManager {
 	private <T> BinarySerializer<T> createSerializer(String serializerName, Class<T> klazz, String... keys) {
 		SerializerBuilder builder = SerializerBuilder.create()
 				.withClassName(serializerName)
-				.withGeneratedBytecodePath(systemCacheFolder.resolve(serializerName + PathConstants.CACHE_EXTENSION))
+				//TODO change to dlc when activej merged my pr
+				.withGeneratedBytecodePath(systemCacheFolder)
 				.withCompatibilityLevel(CompatibilityLevel.LEVEL_3_LE);
 		for (String key : keys) {
 			final var set = subclasses.get(key);
@@ -127,6 +128,11 @@ public class DashSerializerManagerImpl implements DashSerializerManager {
 		@Override
 		public Set<Entry<Class<T>, DashSerializerImpl<T>>> entrySet() {
 			return delegate.entrySet();
+		}
+
+		@Override
+		public DashSerializerImpl<T> put(Class<T> key, DashSerializerImpl<T> value) {
+			return delegate.put(key, value);
 		}
 	}
 }
