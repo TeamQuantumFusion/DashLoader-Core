@@ -81,7 +81,7 @@ public class DashSerializerManagerImpl implements DashSerializerManager {
 		for (String key : keys) {
 			final var set = subclasses.get(key);
 			if (set == null)
-				throw new IllegalArgumentException("Key not found in subclass registry! This is likely a mistake!");
+				throw new IllegalArgumentException("Key \"" + key + "\" not found in subclass registry! This is likely a mistake!");
 			builder.withSubclasses(key, set.stream().sorted(Comparator.comparing(Class::getName)).toList());
 		}
 		return builder.build(klazz);
