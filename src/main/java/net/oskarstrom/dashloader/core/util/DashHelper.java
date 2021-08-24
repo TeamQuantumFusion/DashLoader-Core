@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 
 public class DashHelper {
 
@@ -42,6 +43,11 @@ public class DashHelper {
 		//noinspection unchecked
 		return convertArrays(in, (O[]) new Object[in.length], func);
 	}
+
+	public static <I, O> O[] convertArrays(I[] in, IntFunction<O[]> creation, Function<I, O> func) {
+		return convertArrays(in, creation.apply(in.length), func);
+	}
+
 
 	public static <IK, IV, O> ArrayList<O> convertMapToCollection(Map<IK, IV> in, Function<Map.Entry<IK, IV>, O> func) {
 		return convertMapToCollection(in, new ArrayList<>(), func);
