@@ -5,6 +5,7 @@ import io.activej.serializer.annotations.Serialize;
 import net.oskarstrom.dashloader.api.registry.Pointer;
 
 import java.util.List;
+import java.util.Objects;
 
 public class Object2PointerMap<O> extends DashMap<Object2PointerMap.Entry<O>> {
 
@@ -19,7 +20,7 @@ public class Object2PointerMap<O> extends DashMap<Object2PointerMap.Entry<O>> {
 		super(size);
 	}
 
-	public static class Entry<O> {
+	public static class Entry<O> implements DashEntry<O, Pointer> {
 		@Serialize(order = 0)
 		public final O key;
 		@Serialize(order = 1)
@@ -35,5 +36,27 @@ public class Object2PointerMap<O> extends DashMap<Object2PointerMap.Entry<O>> {
 			return new Entry<>(key, value);
 		}
 
+		@Override
+		public O getKey() {
+			return key;
+		}
+
+		@Override
+		public Pointer getValue() {
+			return value;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			Entry<?> entry = (Entry<?>) o;
+			return Objects.equals(key, entry.key) && Objects.equals(value, entry.value);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(key, value);
+		}
 	}
 }

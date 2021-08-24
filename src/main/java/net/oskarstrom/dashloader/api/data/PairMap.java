@@ -4,9 +4,10 @@ import io.activej.serializer.annotations.Deserialize;
 import io.activej.serializer.annotations.Serialize;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 public class PairMap<K, V> extends DashMap<PairMap.Entry<K, V>> {
+
 	public PairMap(List<Entry<K, V>> data) {
 		super(data);
 	}
@@ -18,7 +19,7 @@ public class PairMap<K, V> extends DashMap<PairMap.Entry<K, V>> {
 		super(size);
 	}
 
-	public static class Entry<K, V> implements Map.Entry<K, V> {
+	public static class Entry<K, V> implements DashEntry<K, V> {
 		@Serialize(order = 0)
 		public final K key;
 		@Serialize(order = 1)
@@ -45,8 +46,16 @@ public class PairMap<K, V> extends DashMap<PairMap.Entry<K, V>> {
 		}
 
 		@Override
-		public V setValue(V value) {
-			throw new UnsupportedOperationException();
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			Entry<?, ?> entry = (Entry<?, ?>) o;
+			return Objects.equals(key, entry.key) && Objects.equals(value, entry.value);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(key, value);
 		}
 	}
 }

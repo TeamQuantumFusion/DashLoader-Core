@@ -49,7 +49,7 @@ public class DashRegistryImpl implements DashRegistry {
 	}
 
 	public RegistryStorageData<?> getStorageData(byte registryPointer) {
-		return new RegistryStorageData<>(storages.get(registryPointer).getDashables(), registryPointer);
+		return RegistryStorageData.create(storages.get(registryPointer).getDashables(), registryPointer);
 	}
 
 	public void addMapping(Class<?> clazz, byte registryPointer) {
