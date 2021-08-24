@@ -1,16 +1,18 @@
 package net.oskarstrom.dashloader.api;
 
 import net.oskarstrom.dashloader.api.registry.DashRegistry;
+import net.oskarstrom.dashloader.api.registry.Pointer;
 import net.oskarstrom.dashloader.api.serializer.DashSerializerManager;
 import net.oskarstrom.dashloader.core.registry.DashRegistryImpl;
 import net.oskarstrom.dashloader.core.serializer.DashSerializerManagerImpl;
 
 import java.nio.file.Path;
+import java.util.function.BiFunction;
 
 public class DashLoaderFactory {
 
-	public static DashRegistry createSerializationRegistry() {
-		return new DashRegistryImpl();
+	public static DashRegistry createSerializationRegistry(BiFunction<Object, DashRegistry, Pointer> failedFunc) {
+		return new DashRegistryImpl(failedFunc);
 	}
 
 	public static DashRegistry createDeserializationRegistry(int size) {

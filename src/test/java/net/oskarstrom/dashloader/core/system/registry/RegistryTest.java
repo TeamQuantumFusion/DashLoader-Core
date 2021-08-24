@@ -17,18 +17,18 @@ public class RegistryTest {
 	@Order(0)
 	public void createFactoryConstructor() throws IllegalAccessException, NoSuchMethodException {
 		final FactoryConstructor<Integer, DashInteger> constructor = FactoryConstructorImpl.createConstructor(Integer.class, DashInteger.class);
-		final DashInteger dashInteger = constructor.create(69, new DashRegistryImpl());
+		final DashInteger dashInteger = constructor.create(69, new DashRegistryImpl((o, r) -> null));
 		assertEquals(69, dashInteger.toUndash(null));
 	}
 
 	@Test
 	@Order(1)
 	public void createFullRegistryTest() throws IllegalAccessException, NoSuchMethodException {
-		DashRegistry registry = new DashRegistryImpl();
+		DashRegistry registry = new DashRegistryImpl((o, r) -> null);
 		final RegistryStorage<Integer> storage = RegistryStorageFactory.createSimpleRegistry(registry, Integer.class, DashInteger.class);
 		registry.addMapping(Integer.class, registry.addStorage(storage));
 
-		final Integer object = new Integer(420);
+		final Integer object = 420;
 		final Pointer add = registry.add(object);
 
 	}

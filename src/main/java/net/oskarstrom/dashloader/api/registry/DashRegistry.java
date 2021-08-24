@@ -13,6 +13,8 @@ public interface DashRegistry extends Applyable {
 
 	RegistryStorageData<?> getStorageData(byte registryPointer);
 
+	RegistryStorage<?> getStorage(byte registryPointer);
+
 	void addMapping(Class<?> clazz, byte registryPointer);
 
 	int getSize();
