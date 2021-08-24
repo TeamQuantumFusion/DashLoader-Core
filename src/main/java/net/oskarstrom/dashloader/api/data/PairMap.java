@@ -13,6 +13,7 @@ public class PairMap<K, V> extends DashMap<PairMap.Entry<K, V>> {
 	}
 
 	public PairMap() {
+		super();
 	}
 
 	public PairMap(int size) {

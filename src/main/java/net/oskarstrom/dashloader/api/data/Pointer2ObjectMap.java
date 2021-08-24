@@ -13,6 +13,7 @@ public class Pointer2ObjectMap<O> extends DashMap<Pointer2ObjectMap.Entry<O>> {
 	}
 
 	public Pointer2ObjectMap() {
+		super();
 	}
 
 	public Pointer2ObjectMap(int size) {
