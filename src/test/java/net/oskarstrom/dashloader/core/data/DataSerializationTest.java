@@ -6,38 +6,39 @@ import net.oskarstrom.dashloader.api.data.Object2PointerMap;
 import net.oskarstrom.dashloader.api.data.PairMap;
 import net.oskarstrom.dashloader.api.data.Pointer2ObjectMap;
 import net.oskarstrom.dashloader.api.data.Pointer2PointerMap;
+import net.oskarstrom.dashloader.core.TestUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 
-public class SerializerTest {
+public class DataSerializationTest {
 
 	@Test
 	@DisplayName("Object2Pointer Serialization Test")
 	public void testObject2Pointer() {
-		SerializerTestObject.testObject(Obj2PntrData.class);
+		TestUtils.test(Obj2PntrData.class);
 	}
 
 	@Test
 	@DisplayName("Pointer2Pointer Serialization Test")
 	public void testPointer2Pointer() {
-		SerializerTestObject.testObject(Pntr2PntrData.class);
+		TestUtils.test(Pntr2PntrData.class);
 	}
 
 	@Test
 	@DisplayName("Pointer2Object Serialization Test")
 	public void testPointer2Object() {
-		SerializerTestObject.testObject(Pntr2ObjData.class);
+		TestUtils.test(Pntr2ObjData.class);
 	}
 
 	@Test
 	@DisplayName("PairMap Serialization Test")
 	public void testPairMap() {
-		SerializerTestObject.testObject(PairMapData.class);
+		TestUtils.test(PairMapData.class);
 	}
 
 
-	public static class Obj2PntrData implements SerializerTestObject.DashTestObject {
+	public static class Obj2PntrData {
 		@Serialize(order = 0)
 		public Object2PointerMap<Integer> data;
 
@@ -45,13 +46,9 @@ public class SerializerTest {
 			this.data = data;
 		}
 
-		@Override
-		public Object getData() {
-			return data;
-		}
 	}
 
-	public static class Pntr2ObjData implements SerializerTestObject.DashTestObject {
+	public static class Pntr2ObjData {
 		@Serialize(order = 0)
 		public Pointer2ObjectMap<Integer> data;
 
@@ -59,13 +56,9 @@ public class SerializerTest {
 			this.data = data;
 		}
 
-		@Override
-		public Object getData() {
-			return data;
-		}
 	}
 
-	public static class Pntr2PntrData implements SerializerTestObject.DashTestObject {
+	public static class Pntr2PntrData {
 		@Serialize(order = 0)
 		public Pointer2PointerMap data;
 
@@ -74,25 +67,14 @@ public class SerializerTest {
 		}
 
 
-		@Override
-		public Object getData() {
-			return data;
-		}
 	}
 
-	public static class PairMapData implements SerializerTestObject.DashTestObject {
+	public static class PairMapData {
 		@Serialize(order = 0)
 		public PairMap<Integer, String> data;
 
 		public PairMapData(@Deserialize("data") PairMap<Integer, String> data) {
 			this.data = data;
 		}
-
-
-		@Override
-		public Object getData() {
-			return data;
-		}
-
 	}
 }
