@@ -42,10 +42,10 @@ public class RegistryStorageFactory {
 		return null;
 	}
 
-	static class SimpleRegistryImpl<F, D extends Dashable<F>> extends RegistryStorageImpl<F, D> {
+	public static class SimpleRegistryImpl<F, D extends Dashable<F>> extends RegistryStorageImpl<F, D> {
 		private final FactoryConstructor<F, D> constructor;
 
-		public SimpleRegistryImpl(FactoryConstructor<F, D> constructor, DashRegistry registry) {
+		protected SimpleRegistryImpl(FactoryConstructor<F, D> constructor, DashRegistry registry) {
 			super(registry);
 			this.constructor = constructor;
 		}
@@ -56,9 +56,9 @@ public class RegistryStorageFactory {
 		}
 	}
 
-	static class SupplierRegistryImpl<F, D extends Dashable<F>> extends RegistryStorageImpl<F, D> {
+	public static class SupplierRegistryImpl<F, D extends Dashable<F>> extends RegistryStorageImpl<F, D> {
 
-		public SupplierRegistryImpl(DashRegistry registry, D[] data) {
+		protected SupplierRegistryImpl(DashRegistry registry, D[] data) {
 			super(registry, data);
 		}
 
@@ -68,10 +68,10 @@ public class RegistryStorageFactory {
 		}
 	}
 
-	static class FactoryRegistryImpl<F, D extends Dashable<F>> extends RegistryStorageImpl<F, D> {
+	public static class FactoryRegistryImpl<F, D extends Dashable<F>> extends RegistryStorageImpl<F, D> {
 		private final Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> constructor;
 
-		public FactoryRegistryImpl(Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> constructor, DashRegistry registry) {
+		protected FactoryRegistryImpl(Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> constructor, DashRegistry registry) {
 			super(registry);
 			this.constructor = constructor;
 		}
