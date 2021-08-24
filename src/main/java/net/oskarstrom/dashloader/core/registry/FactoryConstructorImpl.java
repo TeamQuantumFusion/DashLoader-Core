@@ -12,17 +12,20 @@ import java.lang.invoke.MethodType;
 public class FactoryConstructorImpl<F, D extends Dashable<F>> implements FactoryConstructor<F, D> {
 	private final MethodHandle constructor;
 	private final FactoryConstructor.Mode mode;
+	//for debug
+	private final Class<?> dashClass;
 
-	private FactoryConstructorImpl(MethodHandle constructor, Mode mode) {
+	private FactoryConstructorImpl(MethodHandle constructor, Mode mode, Class<?> dashClass) {
 		this.constructor = constructor;
 		this.mode = mode;
+		this.dashClass = dashClass;
 	}
 
 	public static <F, D extends Dashable<F>> FactoryConstructor<F, D> createConstructor(Class<? extends F> rawClass, Class<? extends D> dashClass) throws IllegalAccessException, NoSuchMethodException {
 		for (Mode value : Mode.values()) {
 			final Class<?>[] parameters = value.getParameters(rawClass);
 			try {
-				return new FactoryConstructorImpl<>(MethodHandles.publicLookup().findConstructor(dashClass, MethodType.methodType(void.class, parameters)), value);
+				return new FactoryConstructorImpl<>(MethodHandles.publicLookup().findConstructor(dashClass, MethodType.methodType(void.class, parameters)), value, dashClass);
 			} catch (NoSuchMethodException ignored) {
 			}
 		}
@@ -40,7 +43,7 @@ public class FactoryConstructorImpl<F, D extends Dashable<F>> implements Factory
 				case EMPTY -> constructor.invoke();
 			};
 		} catch (Throwable throwable) {
-			throw new IllegalStateException("Unable to find constructor.");
+			throw new IllegalStateException(throwable);
 		}
 
 		if (objectOut != null) {
