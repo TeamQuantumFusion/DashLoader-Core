@@ -33,7 +33,7 @@ public abstract class RegistryStorageImpl<F, D extends Dashable<F>> implements R
 		if (deduplicationMap.containsKey(object))
 			return deduplicationMap.getInt(object);
 		final D dashObject = create(object, registry);
-		ensureDashableSize(dashables.length + 1);
+		ensureDashableSize(pos + 1);
 		int pos = this.pos;
 		dashables[pos] = dashObject;
 		deduplicationMap.put(object, pos);
