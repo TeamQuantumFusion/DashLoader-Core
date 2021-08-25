@@ -54,10 +54,11 @@ public abstract class RegistryStorageImpl<F, D extends Dashable<F>> implements R
 
 	@SuppressWarnings("unchecked")
 	public D[] getDashables() {
-		D[] trimmedArray = (D[]) new Dashable[pos + 1];
-		if (pos >= 0) System.arraycopy(dashables, 0, trimmedArray, 0, pos + 1);
+		D[] trimmedArray = (D[]) new Dashable[pos];
+		System.arraycopy(dashables, 0, trimmedArray, 0, pos);
 		return trimmedArray;
 	}
+
 
 	@Override
 	public F get(int pointer) {

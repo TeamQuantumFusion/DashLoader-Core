@@ -22,6 +22,17 @@ public class RegistryTest {
 	}
 
 	@Test
+	public void testRegistryStorage() {
+		final RegistryStorage<Integer> simpleRegistry = RegistryStorageFactory.createSimpleRegistry(null, Integer.class, DashInteger.class);
+		final int add = simpleRegistry.add(423);
+		simpleRegistry.add(4243213);
+		simpleRegistry.add(4251343);
+		simpleRegistry.add(42313);
+		final RegistryStorage<Integer> supplierRegistry = RegistryStorageFactory.createSupplierRegistry(null, simpleRegistry.getDashables());
+		final Integer integer = supplierRegistry.get(add);
+	}
+
+	@Test
 	@Order(1)
 	public void createFullRegistryTest() throws IllegalAccessException, NoSuchMethodException {
 		DashRegistry registry = new DashRegistryImpl((o, r) -> null);

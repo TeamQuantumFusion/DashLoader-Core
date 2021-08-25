@@ -4,7 +4,6 @@ import io.activej.serializer.annotations.Deserialize;
 import io.activej.serializer.annotations.Serialize;
 import net.oskarstrom.dashloader.api.Dashable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -21,9 +20,7 @@ public class RegistryStorageData<D> {
 	}
 
 	public static <D> RegistryStorageData<D> create(D[] dashables, int registryPos) {
-		List<D> out = new ArrayList<>(dashables.length);
-		out.addAll(Arrays.asList(dashables));
-		return new RegistryStorageData<>(out, registryPos);
+		return new RegistryStorageData<>(Arrays.asList(dashables), registryPos);
 	}
 
 
