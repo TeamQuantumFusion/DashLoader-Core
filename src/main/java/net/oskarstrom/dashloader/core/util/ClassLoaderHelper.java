@@ -5,12 +5,7 @@ import java.net.URL;
 import java.util.Enumeration;
 
 public class ClassLoaderHelper {
-	private static Accessor accessor;
-
-	public static void setAccessor(ClassLoader classLoader) {
-		accessor = new Accessor(classLoader);
-	}
-
+	public static Accessor accessor;
 
 	private static void checkIfNull() {
 		if (accessor == null)

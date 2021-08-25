@@ -1,6 +1,7 @@
 package net.oskarstrom.dashloader.core.serializer;
 
 import io.activej.codegen.ClassBuilder;
+import io.activej.codegen.DefiningClassLoader;
 import io.activej.serializer.BinarySerializer;
 import io.activej.serializer.CompatibilityLevel;
 import io.activej.serializer.SerializerBuilder;
@@ -73,7 +74,7 @@ public class DashSerializerManagerImpl implements DashSerializerManager {
 	}
 
 	private <T> BinarySerializer<T> createSerializer(String serializerName, Class<T> klazz, String... keys) {
-		SerializerBuilder builder = SerializerBuilder.create()
+		SerializerBuilder builder = SerializerBuilder.create(DefiningClassLoader.create(ClassLoaderHelper.accessor))
 				.withClassName(serializerName)
 				//TODO change to dlc when activej merged my pr
 				.withGeneratedBytecodePath(systemCacheFolder)
