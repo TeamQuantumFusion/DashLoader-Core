@@ -1,22 +1,23 @@
 package net.oskarstrom.dashloader.api.registry;
 
-// TODO: waiting for ActiveJ to add support
-@SuppressWarnings("ClassCanBeRecord")
+
 public class Pointer {
+
 	public static int parsePointer(int objectPointer, byte registryPointer) {
-		if (registryPointer < 0) {
-			throw new IllegalStateException("Registry pointer is overflowing");
+		if (registryPointer > 0x3f)
+			throw new IllegalStateException("Registry pointer is too big. " + registryPointer + " > " + 63);
+		if (objectPointer > 0x3ffffff) {
+			throw new IllegalStateException("Object pointer is too big. " + objectPointer + " > " + 67108863);
 		}
-		return (objectPointer << 4) | ((int) registryPointer);
+		return objectPointer << 6 | (registryPointer & 0x3f);
 	}
 
 	public static int getObjectPointer(int pointer) {
-		return pointer >>> 4;
+		return pointer >>> 6;
 	}
 
-	public static int getRegistryPointer(int pointer) {
-		return (byte) pointer;
+	public static byte getRegistryPointer(int pointer) {
+		return (byte) (pointer & 0x3f);
 	}
-
 
 }

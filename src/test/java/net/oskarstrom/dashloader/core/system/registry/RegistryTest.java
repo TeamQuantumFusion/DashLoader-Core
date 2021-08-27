@@ -3,7 +3,10 @@ package net.oskarstrom.dashloader.core.system.registry;
 import io.activej.serializer.annotations.Deserialize;
 import io.activej.serializer.annotations.Serialize;
 import net.oskarstrom.dashloader.api.Dashable;
-import net.oskarstrom.dashloader.api.registry.*;
+import net.oskarstrom.dashloader.api.registry.DashRegistry;
+import net.oskarstrom.dashloader.api.registry.FactoryConstructor;
+import net.oskarstrom.dashloader.api.registry.RegistryStorage;
+import net.oskarstrom.dashloader.api.registry.RegistryStorageFactory;
 import net.oskarstrom.dashloader.core.registry.DashRegistryImpl;
 import net.oskarstrom.dashloader.core.registry.FactoryConstructorImpl;
 import org.junit.jupiter.api.Order;
@@ -40,7 +43,7 @@ public class RegistryTest {
 		registry.addMapping(Integer.class, registry.addStorage(storage));
 
 		final Integer object = 420;
-		final Pointer add = registry.add(object);
+		final int add = registry.add(object);
 
 	}
 
