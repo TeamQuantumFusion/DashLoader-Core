@@ -21,6 +21,9 @@ public class DashRegistryImpl implements DashRegistry {
 
 	public DashRegistryImpl(int size) {
 		this.storages = new ArrayList<>(size);
+		for (int i = 0; i < size; i++) {
+			storages.add(null);
+		}
 		this.failedFunc = (o, r) -> {
 			throw new UnsupportedOperationException("Called add on Deserialization registry");
 		};
