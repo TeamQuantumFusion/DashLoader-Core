@@ -1,10 +1,12 @@
 package net.oskarstrom.dashloader.core.serializer;
 
 import io.activej.serializer.BinarySerializer;
+import io.activej.serializer.stream.StreamInput;
 import io.activej.serializer.stream.StreamOutput;
 import net.oskarstrom.dashloader.api.serializer.DashSerializer;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,8 +24,11 @@ public class DashSerializerImpl<O> implements DashSerializer<O> {
 
 	@Override
 	public O deserialize(String path) throws IOException {
-		final byte[] bytes = Files.readAllBytes(startingPath.resolve(path));
-		return serializer.decode(bytes, 0);
+		final InputStream output = Files.newInputStream(startingPath.resolve(path));
+		final StreamInput streamOutput = StreamInput.create(output);
+		final O deserialize = streamOutput.deserialize(serializer);
+		streamOutput.close();
+		return deserialize;
 	}
 
 	@Override
