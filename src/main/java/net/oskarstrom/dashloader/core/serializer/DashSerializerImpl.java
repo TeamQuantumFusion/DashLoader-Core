@@ -24,10 +24,10 @@ public class DashSerializerImpl<O> implements DashSerializer<O> {
 
 	@Override
 	public O deserialize(String path) throws IOException {
-		final InputStream output = Files.newInputStream(startingPath.resolve(path));
-		final StreamInput streamOutput = StreamInput.create(output);
-		final O deserialize = streamOutput.deserialize(serializer);
-		streamOutput.close();
+		final InputStream input = Files.newInputStream(startingPath.resolve(path));
+		final StreamInput streamInput = StreamInput.create(input);
+		final O deserialize = streamInput.deserialize(serializer);
+		streamInput.close();
 		return deserialize;
 	}
 
