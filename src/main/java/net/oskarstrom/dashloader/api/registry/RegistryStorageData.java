@@ -25,7 +25,7 @@ public class RegistryStorageData<D> {
 
 
 	public <DENF extends Dashable<?>> DENF[] getDashables() {
-		//noinspection unchecked,ToArrayCallWithZeroLengthArrayArgument
-		return (DENF[]) dashables.toArray(new Object[dashables.size()]);
+		//noinspection unchecked,SuspiciousToArrayCall
+		return (DENF[]) dashables.toArray(new Dashable[0]);
 	}
 }
