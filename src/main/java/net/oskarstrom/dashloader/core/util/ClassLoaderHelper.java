@@ -2,6 +2,7 @@ package net.oskarstrom.dashloader.core.util;
 
 import java.io.IOException;
 import java.net.URL;
+import java.security.SecureClassLoader;
 import java.util.Enumeration;
 
 public class ClassLoaderHelper {
@@ -67,8 +68,8 @@ public class ClassLoaderHelper {
 		return accessor.defineClassAccess(name, b, off, len);
 	}
 
-	private static class Accessor extends ClassLoader {
-		private Accessor(ClassLoader parent) {
+	public static class Accessor extends SecureClassLoader {
+		public Accessor(ClassLoader parent) {
 			super(parent);
 		}
 

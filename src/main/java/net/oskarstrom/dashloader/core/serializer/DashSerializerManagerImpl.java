@@ -78,6 +78,7 @@ public class DashSerializerManagerImpl implements DashSerializerManager {
 				.withClassName(serializerName)
 				//TODO change to dlc when activej merged my pr
 				.withGeneratedBytecodePath(systemCacheFolder)
+				.withAnnotationCompatibilityMode()
 				.withCompatibilityLevel(CompatibilityLevel.LEVEL_3_LE);
 		for (String key : keys) {
 			final var set = subclasses.get(key);

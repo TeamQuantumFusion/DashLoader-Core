@@ -2,22 +2,140 @@ package net.oskarstrom.dashloader.api.data;
 
 import io.activej.serializer.annotations.Deserialize;
 import io.activej.serializer.annotations.Serialize;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.IntFunction;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
-public class PairMap<K, V> extends DashMap<PairMap.Entry<K, V>> {
+public class PairMap<K, V> {
+	@Serialize
+	public final List<Entry<K, V>> data;
 
-	public PairMap(List<Entry<K, V>> data) {
-		super(data);
+	public PairMap(@Deserialize("data") List<Entry<K, V>> data) {
+		this.data = data;
 	}
 
 	public PairMap() {
-		super();
+		data = new ArrayList<>();
 	}
 
+
 	public PairMap(int size) {
-		super(size);
+		data = new ArrayList<>(size);
+	}
+
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Pointer2ObjectMap<?> dashMap = (Pointer2ObjectMap<?>) o;
+		return Objects.equals(data, dashMap.data);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(data);
+	}
+
+	public int size() {
+		return data.size();
+	}
+
+
+	public boolean isEmpty() {
+		return data.isEmpty();
+	}
+
+
+	public boolean contains(Object o) {
+		return data.contains(o);
+	}
+
+	@NotNull
+
+	public Iterator<Entry<K, V>> iterator() {
+		return data.iterator();
+	}
+
+	@NotNull
+
+	public Object[] toArray() {
+		return data.toArray();
+	}
+
+	@NotNull
+
+	public <T> T[] toArray(@NotNull T[] a) {
+		return data.toArray(a);
+	}
+
+
+	public boolean add(Entry<K, V> e) {
+		return data.add(e);
+	}
+
+
+	public boolean remove(Object o) {
+		return data.remove(o);
+	}
+
+
+	public boolean containsAll(@NotNull Collection<?> c) {
+		return data.containsAll(c);
+	}
+
+
+	public boolean addAll(@NotNull Collection<? extends Entry<K, V>> c) {
+		return data.addAll(c);
+	}
+
+
+	public boolean removeAll(@NotNull Collection<?> c) {
+		return data.removeAll(c);
+	}
+
+
+	public boolean retainAll(@NotNull Collection<?> c) {
+		return data.retainAll(c);
+	}
+
+
+	public void clear() {
+		data.clear();
+	}
+
+
+	public <T> T[] toArray(IntFunction<T[]> generator) {
+		return data.toArray(generator);
+	}
+
+
+	public boolean removeIf(Predicate<? super Entry<K, V>> filter) {
+		return data.removeIf(filter);
+	}
+
+
+	public Spliterator<Entry<K, V>> spliterator() {
+		return data.spliterator();
+	}
+
+
+	public Stream<Entry<K, V>> stream() {
+		return data.stream();
+	}
+
+
+	public Stream<Entry<K, V>> parallelStream() {
+		return data.parallelStream();
+	}
+
+
+	public void forEach(Consumer<? super Entry<K, V>> action) {
+		data.forEach(action);
 	}
 
 	public static class Entry<K, V> implements DashEntry<K, V> {

@@ -1,33 +1,22 @@
 package net.oskarstrom.dashloader.api.registry;
 
-import io.activej.serializer.annotations.Deserialize;
-import io.activej.serializer.annotations.Serialize;
-
-import java.util.Objects;
-
 // TODO: waiting for ActiveJ to add support
 @SuppressWarnings("ClassCanBeRecord")
 public class Pointer {
-	@Serialize(order = 0)
-	public final int objectPointer;
-	@Serialize(order = 1)
-	public final byte registryPointer;
-
-	public Pointer(@Deserialize("objectPointer") int objectPointer, @Deserialize("registryPointer") byte registryPointer) {
-		this.objectPointer = objectPointer;
-		this.registryPointer = registryPointer;
+	public static int parsePointer(int objectPointer, byte registryPointer) {
+		if (registryPointer < 0) {
+			throw new IllegalStateException("Registry pointer is overflowing");
+		}
+		return (objectPointer << 4) | ((int) registryPointer);
 	}
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		Pointer pointer = (Pointer) o;
-		return objectPointer == pointer.objectPointer && registryPointer == pointer.registryPointer;
+	public static int getObjectPointer(int pointer) {
+		return pointer >>> 4;
 	}
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(objectPointer, registryPointer);
+	public static int getRegistryPointer(int pointer) {
+		return (byte) pointer;
 	}
+
+
 }

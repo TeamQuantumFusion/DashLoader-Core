@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 public class DataSerializationTest {
 
-	private final Pointer standardPointer = new Pointer(420, (byte) 69);
+	private static final int standardPointer = Pointer.parsePointer(420, (byte) 69);
 
 	@Test
 	@DisplayName("Object2Pointer Serialization Test")
