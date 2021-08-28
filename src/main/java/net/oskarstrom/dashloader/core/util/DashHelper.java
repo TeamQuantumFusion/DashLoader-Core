@@ -1,6 +1,6 @@
 package net.oskarstrom.dashloader.core.util;
 
-import net.oskarstrom.dashloader.api.registry.DashRegistry;
+import net.oskarstrom.dashloader.api.registry.DashExportHandler;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,7 +18,7 @@ public class DashHelper {
 	}
 
 
-	public static <O, I> O nullable(I input, DashRegistry registry, BiFunction<I, DashRegistry, O> func) {
+	public static <O, I> O nullable(I input, DashExportHandler registry, BiFunction<I, DashExportHandler, O> func) {
 		return input == null ? null : func.apply(input, registry);
 	}
 

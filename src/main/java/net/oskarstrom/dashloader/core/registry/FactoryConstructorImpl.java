@@ -49,7 +49,7 @@ public class FactoryConstructorImpl<F, D extends Dashable<F>> implements Factory
 		if (objectOut != null) {
 			return (D) objectOut;
 		}
-		throw new IllegalStateException("Constructor returned null.");
+		throw new IllegalStateException("Constructor for " + dashClass.getSimpleName() + " returned null.");
 	}
 
 

@@ -1,6 +1,6 @@
 package net.oskarstrom.dashloader.api;
 
-import net.oskarstrom.dashloader.api.registry.DashRegistry;
+import net.oskarstrom.dashloader.api.registry.DashExportHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ public class ThreadManager {
 		}, true);
 	}
 
-	public static <F, D extends Dashable<F>> void parallelToUndash(DashRegistry registry, D[] dashArray, F[] outputArray) {
+	public static <F, D extends Dashable<F>> void parallelToUndash(DashExportHandler registry, D[] dashArray, F[] outputArray) {
 		ensureReadyForExecution();
 		//noinspection ConstantConditions
 		dashExecutionPool.invoke(new UndashTask<>(registry, dashArray, outputArray));
@@ -64,7 +64,7 @@ public class ThreadManager {
 			future.get();
 	}
 
-	public static <D extends Applyable> void parallelApply(DashRegistry registry, D[] applyArray) {
+	public static <D extends Applyable> void parallelApply(DashExportHandler registry, D[] applyArray) {
 		ensureReadyForExecution();
 		//noinspection ConstantConditions
 		dashExecutionPool.invoke(new ApplyTask<>(registry, applyArray));
@@ -81,9 +81,9 @@ public class ThreadManager {
 		private final int stop;
 		private final D[] startArray;
 		private final F[] outputArray;
-		private final DashRegistry registry;
+		private final DashExportHandler registry;
 
-		public UndashTask(DashRegistry registry, D[] startArray, F[] outputArray) {
+		public UndashTask(DashExportHandler registry, D[] startArray, F[] outputArray) {
 			this.registry = registry;
 			this.start = 0;
 			this.stop = startArray.length;
@@ -91,7 +91,7 @@ public class ThreadManager {
 			this.outputArray = outputArray;
 		}
 
-		private UndashTask(DashRegistry registry, int start, int stop, D[] startArray, F[] outputArray) {
+		private UndashTask(DashExportHandler registry, int start, int stop, D[] startArray, F[] outputArray) {
 			this.registry = registry;
 			this.start = start;
 			this.stop = stop;
@@ -122,16 +122,16 @@ public class ThreadManager {
 		private final int start;
 		private final int stop;
 		private final D[] startArray;
-		private final DashRegistry registry;
+		private final DashExportHandler registry;
 
-		public ApplyTask(DashRegistry registry, D[] startArray) {
+		public ApplyTask(DashExportHandler registry, D[] startArray) {
 			this.registry = registry;
 			this.start = 0;
 			this.stop = startArray.length;
 			this.startArray = startArray;
 		}
 
-		private ApplyTask(DashRegistry registry, int start, int stop, D[] startArray) {
+		private ApplyTask(DashExportHandler registry, int start, int stop, D[] startArray) {
 			this.registry = registry;
 			this.start = start;
 			this.stop = stop;

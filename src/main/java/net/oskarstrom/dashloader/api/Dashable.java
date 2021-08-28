@@ -1,7 +1,7 @@
 package net.oskarstrom.dashloader.api;
 
-import net.oskarstrom.dashloader.api.registry.DashRegistry;
+import net.oskarstrom.dashloader.api.registry.DashExportHandler;
 
 public interface Dashable<F> {
-	F toUndash(DashRegistry registry);
+	F toUndash(DashExportHandler registry);
 }

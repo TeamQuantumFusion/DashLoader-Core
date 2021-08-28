@@ -1,7 +1,9 @@
 package net.oskarstrom.dashloader.api;
 
+import net.oskarstrom.dashloader.api.registry.DashExportHandler;
 import net.oskarstrom.dashloader.api.registry.DashRegistry;
 import net.oskarstrom.dashloader.api.serializer.DashSerializerManager;
+import net.oskarstrom.dashloader.core.registry.DashExportHandlerImpl;
 import net.oskarstrom.dashloader.core.registry.DashRegistryImpl;
 import net.oskarstrom.dashloader.core.serializer.DashSerializerManagerImpl;
 
@@ -14,10 +16,9 @@ public class DashLoaderFactory {
 		return new DashRegistryImpl(failedFunc);
 	}
 
-	public static DashRegistry createDeserializationRegistry(int size) {
-		return new DashRegistryImpl(size);
+	public static DashExportHandler createExportHandler(int size) {
+		return new DashExportHandlerImpl(size);
 	}
-
 
 	public static DashSerializerManager createSerializationManager(Path systemCacheFolder) {
 		return new DashSerializerManagerImpl(systemCacheFolder);

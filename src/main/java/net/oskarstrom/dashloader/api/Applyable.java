@@ -1,7 +1,7 @@
 package net.oskarstrom.dashloader.api;
 
-import net.oskarstrom.dashloader.api.registry.DashRegistry;
+import net.oskarstrom.dashloader.api.registry.DashExportHandler;
 
 public interface Applyable {
-	void apply(DashRegistry registry);
+	void apply(DashExportHandler registry);
 }

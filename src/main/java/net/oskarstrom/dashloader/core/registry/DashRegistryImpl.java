@@ -2,7 +2,9 @@ package net.oskarstrom.dashloader.core.registry;
 
 import it.unimi.dsi.fastutil.objects.Object2ByteMap;
 import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
-import net.oskarstrom.dashloader.api.registry.*;
+import net.oskarstrom.dashloader.api.registry.DashRegistry;
+import net.oskarstrom.dashloader.api.registry.Pointer;
+import net.oskarstrom.dashloader.api.registry.RegistryStorage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,15 +50,6 @@ public class DashRegistryImpl implements DashRegistry {
 		return pos;
 	}
 
-	public void addStorage(RegistryStorageData<?> registryStorageData) {
-		final RegistryStorage<?> supplierRegistry = RegistryStorageFactory.createSupplierRegistry(this, registryStorageData.getDashables());
-		storages.set(registryStorageData.registryPos, supplierRegistry);
-	}
-
-	public RegistryStorageData<?> getStorageData(byte registryPointer) {
-		return RegistryStorageData.create(storages.get(registryPointer).getDashables(), registryPointer);
-	}
-
 	public RegistryStorage<?> getStorage(byte registryPointer) {
 		return storages.get(registryPointer);
 	}
@@ -67,23 +60,7 @@ public class DashRegistryImpl implements DashRegistry {
 
 	@Override
 	public int getSize() {
-		return storages.size();
+		return 0;
 	}
 
-
-	@Override
-	public <F> F get(int pointer) {
-		final RegistryStorage<?> registryStorage = storages.get(Pointer.getRegistryPointer(pointer));
-		if (registryStorage == null) {
-			throw new IllegalStateException("Registry storage " + Pointer.getRegistryPointer(pointer) + " does not exist.");
-		}
-		//noinspection unchecked
-		return (F) registryStorage.get(Pointer.getObjectPointer(pointer));
-	}
-
-	@Override
-	public void apply(DashRegistry registry) {
-		for (var storage : storages)
-			storage.toUndash(registry);
-	}
 }

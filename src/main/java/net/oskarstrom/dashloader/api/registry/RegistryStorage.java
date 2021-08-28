@@ -2,10 +2,8 @@ package net.oskarstrom.dashloader.api.registry;
 
 import net.oskarstrom.dashloader.api.Dashable;
 
-public interface RegistryStorage<F> extends Dashable<F[]> {
+public interface RegistryStorage<F> {
 	int add(F object);
-
-	F get(int pointer);
 
 	Dashable<F>[] getDashables();
 }

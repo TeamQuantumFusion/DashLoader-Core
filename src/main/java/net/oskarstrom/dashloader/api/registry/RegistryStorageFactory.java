@@ -3,6 +3,7 @@ package net.oskarstrom.dashloader.api.registry;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.oskarstrom.dashloader.api.Dashable;
+import net.oskarstrom.dashloader.core.registry.ExportDataImpl;
 import net.oskarstrom.dashloader.core.registry.FactoryConstructorImpl;
 import net.oskarstrom.dashloader.core.registry.RegistryStorageImpl;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,16 @@ public class RegistryStorageFactory {
 		}
 		return new FactoryRegistryImpl<>(constructors, registry);
 	}
+
+	public static <F, D extends Dashable<F>> ExportData createData(DashRegistry dashRegistry, byte pos, short priority) {
+		final RegistryStorage<?> storage = dashRegistry.getStorage(pos);
+		if (storage == null) {
+			throw new NullPointerException("Could not find registry storage at pos: " + pos);
+		}
+		//noinspection unchecked
+		return new ExportDataImpl<>((D[]) storage.getDashables(), pos, priority);
+	}
+
 
 	@NotNull
 	private static <F, D extends Dashable<F>> FactoryConstructor<F, D> getConstructor(Class<? extends F> rawClass, Class<? extends D> dashClass) {

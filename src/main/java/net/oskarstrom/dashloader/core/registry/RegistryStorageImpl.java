@@ -3,7 +3,6 @@ package net.oskarstrom.dashloader.core.registry;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.oskarstrom.dashloader.api.Dashable;
-import net.oskarstrom.dashloader.api.ThreadManager;
 import net.oskarstrom.dashloader.api.registry.DashRegistry;
 import net.oskarstrom.dashloader.api.registry.RegistryStorage;
 
@@ -59,20 +58,5 @@ public abstract class RegistryStorageImpl<F, D extends Dashable<F>> implements R
 		return trimmedArray;
 	}
 
-
-	@Override
-	public F get(int pointer) {
-		//noinspection ConstantConditions
-		return unDashedObjects[pointer];
-	}
-
-	@Override
-	public F[] toUndash(DashRegistry registry) {
-		if (dashables == null || dashables.length == 0) {
-			throw new IllegalStateException("Dashables are not available.");
-		}
-		ThreadManager.parallelToUndash(registry, dashables, unDashedObjects);
-		return unDashedObjects;
-	}
 
 }
