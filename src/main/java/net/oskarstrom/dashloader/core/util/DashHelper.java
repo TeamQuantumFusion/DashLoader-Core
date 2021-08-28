@@ -1,6 +1,7 @@
 package net.oskarstrom.dashloader.core.util;
 
 import net.oskarstrom.dashloader.api.registry.DashExportHandler;
+import net.oskarstrom.dashloader.api.registry.DashRegistry;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,6 +25,24 @@ public class DashHelper {
 
 	public static <IO> IO nullable(IO input) {
 		return nullable(input, i -> i);
+	}
+
+
+	public static <I> int[] addArrayToRegistry(I[] input, DashRegistry registry) {
+		final int[] out = new int[input.length];
+		for (int i = 0, inputLength = input.length; i < inputLength; i++) {
+			out[i] = registry.add(input[i]);
+		}
+		return out;
+	}
+
+	public static <I> I[] getArrayFromRegistry(int[] input, DashExportHandler exportHandler) {
+		final Object[] out = new Object[input.length];
+		for (int i = 0, inputLength = input.length; i < inputLength; i++) {
+			out[i] = exportHandler.get(input[i]);
+		}
+		//noinspection unchecked
+		return (I[]) out;
 	}
 
 

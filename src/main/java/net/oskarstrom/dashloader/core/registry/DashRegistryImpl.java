@@ -4,15 +4,14 @@ import it.unimi.dsi.fastutil.objects.Object2ByteMap;
 import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
 import net.oskarstrom.dashloader.api.registry.DashRegistry;
 import net.oskarstrom.dashloader.api.registry.Pointer;
-import net.oskarstrom.dashloader.api.registry.RegistryStorage;
+import net.oskarstrom.dashloader.api.registry.storage.RegistryStorage;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.function.BiFunction;
 
 public class DashRegistryImpl implements DashRegistry {
 	private final Object2ByteMap<Class<?>> storageMappings = new Object2ByteOpenHashMap<>();
-	private final List<RegistryStorage<?>> storages;
+	private final ArrayList<RegistryStorage<?>> storages;
 	private final BiFunction<Object, DashRegistry, Integer> failedFunc;
 
 
@@ -23,9 +22,6 @@ public class DashRegistryImpl implements DashRegistry {
 
 	public DashRegistryImpl(int size) {
 		this.storages = new ArrayList<>(size);
-		for (int i = 0; i < size; i++) {
-			storages.add(null);
-		}
 		this.failedFunc = (o, r) -> {
 			throw new UnsupportedOperationException("Called add on Deserialization registry");
 		};
@@ -45,7 +41,7 @@ public class DashRegistryImpl implements DashRegistry {
 	}
 
 	public byte addStorage(RegistryStorage<?> registryStorage) {
-		final byte pos = (byte) storages.size();
+		byte pos = (byte) storages.size();
 		storages.add(registryStorage);
 		return pos;
 	}

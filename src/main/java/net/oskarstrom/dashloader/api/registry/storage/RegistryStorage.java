@@ -1,4 +1,4 @@
-package net.oskarstrom.dashloader.api.registry;
+package net.oskarstrom.dashloader.api.registry.storage;
 
 import net.oskarstrom.dashloader.api.Dashable;
 
