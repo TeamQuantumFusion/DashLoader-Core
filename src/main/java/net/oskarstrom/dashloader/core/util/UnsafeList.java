@@ -51,6 +51,13 @@ public class UnsafeList<E> implements List<E> {
 		return elements;
 	}
 
+	public E[] toTrimmedArray() {
+		//noinspection unchecked
+		E[] trimmedArray = (E[]) new Object[size];
+		System.arraycopy(elements, 0, trimmedArray, 0, size);
+		return trimmedArray;
+	}
+
 
 	@Override
 	public <T> T[] toArray(T @NotNull [] a) {
@@ -71,6 +78,13 @@ public class UnsafeList<E> implements List<E> {
 		ensureSize(size + 1);
 		elements[size++] = e;
 		return true;
+	}
+
+	public int put(E e) {
+		int oldSize = size;
+		ensureSize(size + 1);
+		elements[size++] = e;
+		return oldSize;
 	}
 
 	private void ensureSize(int size) {
