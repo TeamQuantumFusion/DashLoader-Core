@@ -12,6 +12,7 @@ import net.oskarstrom.dashloader.api.registry.storage.RegistryStorage;
 import net.oskarstrom.dashloader.api.registry.storage.SoloRegistryStorage;
 import net.oskarstrom.dashloader.core.registry.DashRegistryImpl;
 import net.oskarstrom.dashloader.core.registry.FactoryConstructorImpl;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -25,11 +26,20 @@ public class DashRegistryBuilder {
 		throw new IllegalStateException("No storage was found for " + obj.getClass().getSimpleName());
 	};
 
-
-	public DashRegistryBuilder(List<Class<?>> entries) {
+	private DashRegistryBuilder(List<Class<?>> entries) {
 		this.entries = entries;
 	}
 
+	/**
+	 * <h1>	create</h1>
+	 * <h3>/kriːˈeɪt/</h3>
+	 * <h2>1. bring (something) into existence.</h2>
+	 * <h4>"he created a thirty-acre lake"</h4>
+	 * <h2>2. make a fuss; complain.</h2>
+	 * <h4>(UK) "little kids create because they hate being ignored"</h4>
+	 *
+	 * @return the fuss
+	 */
 	public static DashRegistryBuilder create() {
 		return new DashRegistryBuilder(new ArrayList<>());
 	}
@@ -99,6 +109,14 @@ public class DashRegistryBuilder {
 		return ClassEntry.create((Class<D>) dash, forcedTags);
 	}
 
+	/**
+	 * Build the DashRegistry
+	 * <h2>
+	 * please explode this builder and never use it again, gc told me it really hates builders.
+	 * </h2>
+	 *
+	 * @return The DashRegistry.
+	 */
 	public DashRegistry build() {
 
 		//create classentries
@@ -134,7 +152,13 @@ public class DashRegistryBuilder {
 			if (customStorageSupplier == null) {
 				storage = sortedResult.createStorage(registry, i);
 			} else {
-				storage = customStorageSupplier.create(registry, sortedResult.type, sortedResult.classes, i);
+				final RegistryStorage<?> customStorage = customStorageSupplier.create(registry, sortedResult.type, sortedResult.classes, i);
+				// if returns null use default
+				if (customStorage == null) {
+					storage = sortedResult.createStorage(registry, i);
+				} else {
+					storage = customStorage;
+				}
 			}
 			final byte registryPointer = registry.addStorage(storage);
 			for (ClassEntry<?, ?> aClass : sortedResult.classes) {
@@ -145,52 +169,105 @@ public class DashRegistryBuilder {
 		return registry;
 	}
 
-	public DashRegistryBuilder withDashObject(Class<? extends Dashable<?>> dash) {
-		entries.add(dash);
+	/**
+	 * Add a DashObject to be registered.
+	 *
+	 * @param dashObject The DashObject Class
+	 * @return this builder for chaining
+	 */
+	public DashRegistryBuilder withDashObject(Class<? extends Dashable<?>> dashObject) {
+		entries.add(dashObject);
 		return this;
 	}
 
-	public DashRegistryBuilder withExplicitMather(DashRegistryImpl.ExplicitMatcher mather, Class<?> target) {
-		explicitMappings.put(mather, target);
+	/**
+	 * Add a DashObject to be registered. With a forced tag
+	 *
+	 * @param dashObject The DashObject Class
+	 * @param forcedTag  The Tag to be forced on
+	 * @return this builder for chaining
+	 */
+	public DashRegistryBuilder withDashObject(Class<? extends Dashable<?>> dashObject, Class<?> forcedTag) {
+		entries.add(dashObject);
+		forcedTags.put(dashObject, forcedTag);
 		return this;
 	}
 
-	public DashRegistryBuilder withFailedFunc(BiFunction<Object, DashRegistry, Integer> failedFunc) {
-		this.failedFunc = failedFunc;
-		return this;
-	}
-
-	public DashRegistryBuilder withCustomConstructor(Class<?> tag, CustomStorageSupplier constructor) {
-		customFactoryStorages.put(tag, constructor);
-		return this;
-	}
-
-	public DashRegistryBuilder withDashObject(Class<? extends Dashable<?>> dash, Class<?> forcedTag) {
-		entries.add(dash);
-		forcedTags.put(dash, forcedTag);
-		return this;
-	}
-
+	/**
+	 * Add multiple DashObjects
+	 *
+	 * @param dashObjects The DashObjects
+	 * @return this builder for chaining
+	 */
 	@SafeVarargs
-	public final DashRegistryBuilder withDashObjects(Class<? extends Dashable<?>>... dashes) {
-		entries.addAll(Arrays.asList(dashes));
+	public final DashRegistryBuilder withDashObjects(Class<? extends Dashable<?>>... dashObjects) {
+		entries.addAll(Arrays.asList(dashObjects));
 		return this;
 	}
 
+	/**
+	 * Force a tag on multiple DashObject's at a time
+	 *
+	 * @param forcedTag   The tag to be forced
+	 * @param dashObjects The DashObjects
+	 * @return this builder for chaining
+	 */
 	@SafeVarargs
-	public final DashRegistryBuilder addTags(Class<?> forcedTag, Class<? extends Dashable<?>>... dashes) {
-		for (Class<? extends Dashable<?>> dash : dashes) {
+	public final DashRegistryBuilder addTags(Class<?> forcedTag, Class<? extends Dashable<?>>... dashObjects) {
+		for (Class<? extends Dashable<?>> dash : dashObjects) {
 			forcedTags.put(dash, forcedTag);
 		}
 		return this;
 	}
 
-	public final DashRegistryBuilder addTag(Class<?> forcedTag, Class<? extends Dashable<?>> dash) {
-		forcedTags.put(dash, forcedTag);
+	/**
+	 * Force a tag on a DashObject
+	 *
+	 * @param forcedTag  The tag to be forced
+	 * @param dashObject The DashObject
+	 * @return this builder for chaining
+	 */
+	public final DashRegistryBuilder addTag(Class<?> forcedTag, Class<? extends Dashable<?>> dashObject) {
+		forcedTags.put(dashObject, forcedTag);
 		return this;
 	}
 
-	private enum Type {
+	/**
+	 * If the registry fails this will run, Do your exceptions here.
+	 *
+	 * @param failedFunc The fail function.
+	 * @return this builder for chaining
+	 */
+	public DashRegistryBuilder withFailedFunc(BiFunction<Object, DashRegistry, Integer> failedFunc) {
+		this.failedFunc = failedFunc;
+		return this;
+	}
+
+	/**
+	 * Add an explicit matcher. If mappings fail it will check with explicit matchers if anything matches.
+	 *
+	 * @param matcher The matching function.
+	 * @param target  If the matcher returns true, Search for this class in mappings.
+	 * @return this builder for chaining
+	 */
+	public DashRegistryBuilder withExplicitMather(DashRegistryImpl.ExplicitMatcher matcher, Class<?> target) {
+		explicitMappings.put(matcher, target);
+		return this;
+	}
+
+	/**
+	 * Add a custom RegistryStorage, Everything with this tag will use this constructor.
+	 *
+	 * @param tag         Anything with this tag will use this storage.
+	 * @param constructor The Creator
+	 * @return this builder for chaining
+	 */
+	public DashRegistryBuilder withCustomConstructor(Class<?> tag, CustomStorageSupplier constructor) {
+		customFactoryStorages.put(tag, constructor);
+		return this;
+	}
+
+	public enum Type {
 		SOLO,
 		MULTI,
 		MULTISTAGE
@@ -198,7 +275,16 @@ public class DashRegistryBuilder {
 
 	@FunctionalInterface
 	public interface CustomStorageSupplier {
-		RegistryStorage<?> create(DashRegistry registry, Type type, List<ClassEntry<?, ?>> classes, int priority);
+		/**
+		 * A custom registry constructor
+		 *
+		 * @param registry The DashRegistry in charge
+		 * @param type     The intended type
+		 * @param classes  The current classes that are about to get mapped.
+		 * @param priority The priority in deserialization.
+		 * @return The RegistryStorage. Return null if you want to use the default.
+		 */
+		@Nullable RegistryStorage<?> create(DashRegistry registry, Type type, List<ClassEntry<?, ?>> classes, int priority);
 	}
 
 	public static class ClassEntry<F, D extends Dashable<F>> {
