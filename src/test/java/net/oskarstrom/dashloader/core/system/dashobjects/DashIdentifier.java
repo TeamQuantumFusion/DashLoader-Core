@@ -1,9 +1,9 @@
 package net.oskarstrom.dashloader.core.system.dashobjects;
 
 import io.activej.serializer.annotations.Serialize;
-import net.oskarstrom.dashloader.api.Dashable;
-import net.oskarstrom.dashloader.api.annotations.DashObject;
-import net.oskarstrom.dashloader.api.registry.DashExportHandler;
+import net.oskarstrom.dashloader.core.Dashable;
+import net.oskarstrom.dashloader.core.annotations.DashObject;
+import net.oskarstrom.dashloader.core.registry.DashExportHandler;
 import net.oskarstrom.dashloader.core.system.objects.Identifier;
 
 @DashObject(Identifier.class)

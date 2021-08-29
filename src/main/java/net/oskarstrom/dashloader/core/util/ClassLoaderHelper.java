@@ -13,6 +13,14 @@ public class ClassLoaderHelper {
 			throw new NullPointerException("Accessor ClassLoader is null");
 	}
 
+	public static void init() {
+		init(Thread.currentThread().getContextClassLoader());
+	}
+
+	public static void init(ClassLoader loader) {
+		accessor = new Accessor(loader);
+	}
+
 	public static Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
 		checkIfNull();
 		return accessor.loadClass(name, resolve);

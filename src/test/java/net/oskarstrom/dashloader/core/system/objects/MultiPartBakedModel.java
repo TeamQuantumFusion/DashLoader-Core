@@ -1,6 +1,7 @@
 package net.oskarstrom.dashloader.core.system.objects;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class MultiPartBakedModel implements BakedModel {
 	public final WeightedBakedModel[] weightedBakedModels;
@@ -24,4 +25,21 @@ public class MultiPartBakedModel implements BakedModel {
 		return multiPartBakedModel;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+
+
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		MultiPartBakedModel that = (MultiPartBakedModel) o;
+
+		// Probably incorrect - comparing Object[] arrays with Arrays.equals
+		return Arrays.equals(weightedBakedModels, that.weightedBakedModels);
+	}
+
+	@Override
+	public int hashCode() {
+		return Arrays.hashCode(weightedBakedModels);
+	}
 }

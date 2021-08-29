@@ -2,20 +2,19 @@ package net.oskarstrom.dashloader.core.system.dashobjects;
 
 import io.activej.serializer.annotations.Deserialize;
 import io.activej.serializer.annotations.Serialize;
-import net.oskarstrom.dashloader.api.Dashable;
-import net.oskarstrom.dashloader.api.annotations.DashObject;
-import net.oskarstrom.dashloader.api.annotations.Dependencies;
-import net.oskarstrom.dashloader.api.annotations.RegistryTag;
-import net.oskarstrom.dashloader.api.registry.DashExportHandler;
-import net.oskarstrom.dashloader.api.registry.DashRegistry;
-import net.oskarstrom.dashloader.core.system.objects.BakedModel;
+import net.oskarstrom.dashloader.core.annotations.DashObject;
+import net.oskarstrom.dashloader.core.annotations.Dependencies;
+import net.oskarstrom.dashloader.core.annotations.RegistryTag;
+import net.oskarstrom.dashloader.core.registry.DashExportHandler;
+import net.oskarstrom.dashloader.core.registry.DashRegistry;
 import net.oskarstrom.dashloader.core.system.objects.MultiPartBakedModel;
+import net.oskarstrom.dashloader.core.system.objects.WeightedBakedModel;
 import net.oskarstrom.dashloader.core.util.DashHelper;
 
 @DashObject(MultiPartBakedModel.class)
 @Dependencies(DashWeightedBakedModel.class)
-@RegistryTag(BakedModel.class)
-public class DashMultiPartBakedModel implements DashModel, Dashable<MultiPartBakedModel> {
+@RegistryTag(DashModel.class)
+public class DashMultiPartBakedModel implements DashModel {
 	@Serialize
 	public final int[] weightedBakedModels;
 
@@ -29,7 +28,8 @@ public class DashMultiPartBakedModel implements DashModel, Dashable<MultiPartBak
 
 	@Override
 	public MultiPartBakedModel toUndash(DashExportHandler exportHandler) {
-		return new MultiPartBakedModel(DashHelper.getArrayFromRegistry(weightedBakedModels, exportHandler));
+		final WeightedBakedModel[] arrayFromRegistry = DashHelper.getArrayFromRegistry(weightedBakedModels, new WeightedBakedModel[weightedBakedModels.length], exportHandler);
+		return new MultiPartBakedModel(arrayFromRegistry);
 	}
 
 }

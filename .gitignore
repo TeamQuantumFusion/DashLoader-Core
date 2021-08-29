@@ -26,3 +26,4 @@ bin/
 # macos
 
 *.DS_STORE
+test/

@@ -17,4 +17,21 @@ public class WeightedBakedModel implements BakedModel {
 		return weightedBakedModel;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		WeightedBakedModel that = (WeightedBakedModel) o;
+
+		if (weight != that.weight) return false;
+		return model != null ? model.equals(that.model) : that.model == null;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = weight;
+		result = 31 * result + (model != null ? model.hashCode() : 0);
+		return result;
+	}
 }

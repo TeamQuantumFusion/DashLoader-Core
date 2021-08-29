@@ -1,8 +1,8 @@
 package net.oskarstrom.dashloader.core.system.dashobjects;
 
-import net.oskarstrom.dashloader.api.Dashable;
-import net.oskarstrom.dashloader.api.annotations.DashObject;
-import net.oskarstrom.dashloader.api.registry.DashExportHandler;
+import net.oskarstrom.dashloader.core.Dashable;
+import net.oskarstrom.dashloader.core.annotations.DashObject;
+import net.oskarstrom.dashloader.core.registry.DashExportHandler;
 import net.oskarstrom.dashloader.core.system.objects.Sprite;
 
 @DashObject(Sprite.class)

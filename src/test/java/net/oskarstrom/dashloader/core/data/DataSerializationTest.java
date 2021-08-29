@@ -2,12 +2,8 @@ package net.oskarstrom.dashloader.core.data;
 
 import io.activej.serializer.annotations.Deserialize;
 import io.activej.serializer.annotations.Serialize;
-import net.oskarstrom.dashloader.api.data.Object2PointerMap;
-import net.oskarstrom.dashloader.api.data.PairMap;
-import net.oskarstrom.dashloader.api.data.Pointer2ObjectMap;
-import net.oskarstrom.dashloader.api.data.Pointer2PointerMap;
-import net.oskarstrom.dashloader.api.registry.Pointer;
 import net.oskarstrom.dashloader.core.TestUtils;
+import net.oskarstrom.dashloader.core.registry.Pointer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
