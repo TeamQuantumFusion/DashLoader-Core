@@ -1,14 +1,16 @@
 package net.oskarstrom.dashloader.core.system;
 
 import io.activej.serializer.annotations.Serialize;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.oskarstrom.dashloader.api.registry.DashExportHandler;
 import net.oskarstrom.dashloader.api.registry.DashRegistry;
 import net.oskarstrom.dashloader.api.registry.DashRegistryBuilder;
+import net.oskarstrom.dashloader.api.registry.storage.RegistryStorage;
 import net.oskarstrom.dashloader.core.system.dashobjects.*;
 import net.oskarstrom.dashloader.core.system.objects.BakedModel;
 import net.oskarstrom.dashloader.core.system.objects.MultiPartBakedModel;
 import net.oskarstrom.dashloader.core.util.DashHelper;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -22,17 +24,25 @@ public class SystemSuiteTest {
 
 
 	@Test
-	@Order(1)
 	public void serialization() {
 		final Data data = Data.create(10);
-
 		final DashRegistryBuilder registryStorageFactory = DashRegistryBuilder.create();
 		registryStorageFactory.withDashObjects(DashBasicBakedModel.class, DashIdentifier.class, DashMultiPartBakedModel.class, DashSprite.class, DashWeightedBakedModel.class);
 		final DashRegistry registry = registryStorageFactory.build();
+		IntList integers = new IntArrayList();
+		for (BakedModel model : data.models) {
+			integers.add(registry.add(model));
+		}
+
+
+		final RegistryStorage<DashModel> modelStorage = registry.getStorage(DashModel.class);
+
+
+		System.out.println("don");
+
 	}
 
 	@Test
-	@Order(2)
 	public void deserialization() {
 		System.out.println(test);
 	}

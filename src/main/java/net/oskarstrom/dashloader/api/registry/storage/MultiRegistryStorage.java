@@ -4,19 +4,18 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.oskarstrom.dashloader.api.Dashable;
 import net.oskarstrom.dashloader.api.registry.DashRegistry;
 import net.oskarstrom.dashloader.api.registry.FactoryConstructor;
-import net.oskarstrom.dashloader.core.registry.RegistryStorageImpl;
+import net.oskarstrom.dashloader.api.registry.export.ExportData;
+import net.oskarstrom.dashloader.api.registry.export.MultiExportDataImpl;
 
 public class MultiRegistryStorage<F, D extends Dashable<F>> extends RegistryStorageImpl<F, D> {
 	public final int priority;
-	public final boolean staged;
 	private final Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> constructor;
 
 
-	public MultiRegistryStorage(Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> constructor, DashRegistry registry, int priority, boolean staged) {
+	public MultiRegistryStorage(Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> constructor, DashRegistry registry, int priority) {
 		super(registry);
 		this.constructor = constructor;
 		this.priority = priority;
-		this.staged = staged;
 	}
 
 	@Override
@@ -27,5 +26,11 @@ public class MultiRegistryStorage<F, D extends Dashable<F>> extends RegistryStor
 			throw new IllegalStateException();
 		}
 		return fdFactoryConstructor.create(object, registry);
+	}
+
+	@Override
+	public ExportData getExportData(byte pos) {
+		//noinspection unchecked
+		return new MultiExportDataImpl<>(dashables.toArray(new Dashable[0]), pos, priority);
 	}
 }

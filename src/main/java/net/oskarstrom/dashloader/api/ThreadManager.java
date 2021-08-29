@@ -1,5 +1,7 @@
 package net.oskarstrom.dashloader.api;
 
+import io.activej.serializer.annotations.Deserialize;
+import io.activej.serializer.annotations.Serialize;
 import net.oskarstrom.dashloader.api.registry.DashExportHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +37,12 @@ public class ThreadManager {
 		ensureReadyForExecution();
 		//noinspection ConstantConditions
 		dashExecutionPool.invoke(new UndashTask<>(registry, dashArray, outputArray));
+	}
+
+	public static <F, D extends Dashable<F>> void parallelToUndash(DashExportHandler registry, PosEntry<D>[] dashArray, F[] outputArray) {
+		ensureReadyForExecution();
+		//noinspection ConstantConditions
+		dashExecutionPool.invoke(new PositionedUndashTask<>(registry, dashArray, outputArray));
 	}
 
 	public static <O, C extends Callable<O>> List<O> executeCallables(C... callables) throws ExecutionException, InterruptedException {
@@ -118,6 +126,50 @@ public class ThreadManager {
 		}
 	}
 
+	public static class PositionedUndashTask<D extends Dashable<F>, F> extends RecursiveAction {
+		private final int start;
+		private final int stop;
+		private final PosEntry<D>[] startArray;
+		private final F[] outputArray;
+		private final DashExportHandler registry;
+
+		public PositionedUndashTask(DashExportHandler registry, PosEntry<D>[] startArray, F[] outputArray) {
+			this.registry = registry;
+			this.start = 0;
+			this.stop = startArray.length;
+			this.startArray = startArray;
+			this.outputArray = outputArray;
+		}
+
+		private PositionedUndashTask(DashExportHandler registry, int start, int stop, PosEntry<D>[] startArray, F[] outputArray) {
+			this.registry = registry;
+			this.start = start;
+			this.stop = stop;
+			this.startArray = startArray;
+			this.outputArray = outputArray;
+		}
+
+		@Override
+		protected void compute() {
+			final int size = stop - start;
+			if (size < THRESHOLD) {
+				computeTask();
+			} else {
+				final int middle = start + (size / 2);
+				final PositionedUndashTask<D, F> alpha = new PositionedUndashTask<>(registry, start, middle, startArray, outputArray);
+				final PositionedUndashTask<D, F> beta = new PositionedUndashTask<>(registry, middle, stop, startArray, outputArray);
+				invokeAll(alpha, beta);
+			}
+		}
+
+		private void computeTask() {
+			for (int i = start; i < stop; i++) {
+				final PosEntry<D> dPosEntry = startArray[i];
+				outputArray[dPosEntry.pos] = dPosEntry.entry.toUndash(registry);
+			}
+		}
+	}
+
 	public static class ApplyTask<D extends Applyable> extends RecursiveAction {
 		private final int start;
 		private final int stop;
@@ -156,4 +208,26 @@ public class ThreadManager {
 				startArray[i].apply(registry);
 		}
 	}
+
+	public static final class PosEntry<K> {
+		@Serialize
+		public final int pos;
+		@Serialize
+		public final K entry;
+
+		public PosEntry(@Deserialize("pos") int pos, @Deserialize("entry") K entry) {
+			this.pos = pos;
+			this.entry = entry;
+		}
+
+		public int pos() {
+			return pos;
+		}
+
+		public K entry() {
+			return entry;
+		}
+
+	}
+
 }

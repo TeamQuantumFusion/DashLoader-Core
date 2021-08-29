@@ -11,6 +11,8 @@ public interface DashRegistry {
 
 	RegistryStorage<?> getStorage(byte registryPointer);
 
+	<D> RegistryStorage<D> getStorage(Class<D> tag);
+
 	void addMapping(Class<?> clazz, byte registryPointer);
 
 	int getSize();

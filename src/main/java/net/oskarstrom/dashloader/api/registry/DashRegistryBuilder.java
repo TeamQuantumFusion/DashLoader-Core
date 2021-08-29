@@ -8,6 +8,7 @@ import net.oskarstrom.dashloader.api.annotations.DashObject;
 import net.oskarstrom.dashloader.api.annotations.Dependencies;
 import net.oskarstrom.dashloader.api.annotations.RegistryTag;
 import net.oskarstrom.dashloader.api.registry.storage.MultiRegistryStorage;
+import net.oskarstrom.dashloader.api.registry.storage.MultiStageRegistryStorage;
 import net.oskarstrom.dashloader.api.registry.storage.RegistryStorage;
 import net.oskarstrom.dashloader.api.registry.storage.SoloRegistryStorage;
 import net.oskarstrom.dashloader.core.registry.DashRegistryImpl;
@@ -23,7 +24,8 @@ public class DashRegistryBuilder {
 	private final Object2ObjectMap<Class<?>, CustomStorageSupplier> customFactoryStorages = new Object2ObjectOpenHashMap<>();
 	private final Object2ObjectMap<DashRegistryImpl.ExplicitMatcher, Class<?>> explicitMappings = new Object2ObjectOpenHashMap<>();
 	private BiFunction<Object, DashRegistry, Integer> failedFunc = (obj, registry) -> {
-		throw new IllegalStateException("No storage was found for " + obj.getClass().getSimpleName());
+		System.out.println("No storage was found for " + obj.getClass().getSimpleName());
+		return -1;
 	};
 
 	private DashRegistryBuilder(List<Class<?>> entries) {
@@ -91,7 +93,7 @@ public class DashRegistryBuilder {
 		return out;
 	}
 
-	public static <F, D extends Dashable<F>> FactoryConstructor<F, D> createConstructor(Class<?> rawClass, Class<?> dashClass) {
+	public static <F, D extends Dashable<F>> FactoryConstructor<F, D> createConstructor(Class<?> dashClass, Class<?> rawClass) {
 		try {
 			//noinspection unchecked
 			return FactoryConstructorImpl.createConstructor((Class<F>) rawClass, (Class<D>) dashClass);
@@ -142,7 +144,8 @@ public class DashRegistryBuilder {
 		sortedResults.sort(Comparator.comparingInt(value -> value.maxPriority));
 
 
-		DashRegistry registry = new DashRegistryImpl(new Object2ByteOpenHashMap<>(), explicitMappings, failedFunc);
+		final Object2ByteOpenHashMap<Class<?>> tags = new Object2ByteOpenHashMap<>();
+		DashRegistry registry = new DashRegistryImpl(new Object2ByteOpenHashMap<>(), explicitMappings, failedFunc, tags);
 
 		for (int i = 0; i < sortedResults.size(); i++) {
 			StorageMetadata sortedResult = sortedResults.get(i);
@@ -164,6 +167,7 @@ public class DashRegistryBuilder {
 			for (ClassEntry<?, ?> aClass : sortedResult.classes) {
 				registry.addMapping(aClass.targetClass, registryPointer);
 			}
+			tags.put(sortedResult.tag, registryPointer);
 		}
 
 		return registry;
@@ -366,7 +370,7 @@ public class DashRegistryBuilder {
 		}
 
 
-		public <F, D extends Dashable<F>> RegistryStorage<F> createStorage(DashRegistry registry, int priority) {
+		public <F, D extends Dashable<F>> RegistryStorage<F> createStorage(DashRegistry registry, int priority, byte pos) {
 
 
 			return switch (type) {
@@ -376,15 +380,28 @@ public class DashRegistryBuilder {
 					final FactoryConstructor<F, D> constructor = createConstructor(classEntry.dashClass, classEntry.targetClass);
 					yield new SoloRegistryStorage<>(constructor, registry, priority);
 				}
-				case MULTI, MULTISTAGE -> {
-					Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> map = new Object2ObjectOpenHashMap<>();
-					for (ClassEntry<?, ?> aClass : classes) {
-						//noinspection unchecked
-						map.put((Class<F>) aClass.targetClass, createConstructor(aClass.dashClass, aClass.targetClass));
+				case MULTI -> {
+					Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> map = createMultiConstructors(classes);
+					yield new MultiRegistryStorage<>(map, registry, priority);
+				}
+				case MULTISTAGE -> {
+					Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> map = createMultiConstructors(classes);
+					Map<Class<?>, Integer> stages = new HashMap<>();
+					for (int i = 0, classesSize = classes.size(); i < classesSize; i++) {
+						stages.put(classes.get(i).dashClass, i);
 					}
-					yield new MultiRegistryStorage<>(map, registry, priority, type == Type.MULTI);
+					yield new MultiStageRegistryStorage<>(map, registry, priority, stages);
 				}
 			};
+		}
+
+		private <F, D extends Dashable<F>> Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> createMultiConstructors(List<ClassEntry<?, ?>> classes) {
+			Object2ObjectMap<Class<F>, FactoryConstructor<F, D>> map = new Object2ObjectOpenHashMap<>();
+			for (ClassEntry<?, ?> aClass : classes) {
+				//noinspection unchecked
+				map.put((Class<F>) aClass.targetClass, createConstructor(aClass.dashClass, aClass.targetClass));
+			}
+			return map;
 		}
 
 		public void compileType() {

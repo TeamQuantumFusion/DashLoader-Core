@@ -11,18 +11,20 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 public class DashRegistryImpl implements DashRegistry {
-	private final Object2ByteMap<Class<?>> storageMappings;
 	private final Object2ObjectMap<ExplicitMatcher, Class<?>> explicitMappings;
-	private final List<RegistryStorage<?>> storages;
 	private final BiFunction<Object, DashRegistry, Integer> failedFunc;
+	private final Object2ByteMap<Class<?>> storageMappings;
+	private final Object2ByteMap<Class<?>> tags;
+	private final List<RegistryStorage<?>> storages;
 
 
 	public DashRegistryImpl(Object2ByteMap<Class<?>> storageMappings,
-							Object2ObjectMap<DashRegistryImpl.ExplicitMatcher, Class<?>> explicitMappings,
-							BiFunction<Object, DashRegistry, Integer> failedFunc) {
+							Object2ObjectMap<ExplicitMatcher, Class<?>> explicitMappings,
+							BiFunction<Object, DashRegistry, Integer> failedFunc, Object2ByteMap<Class<?>> tags) {
 		this.storageMappings = storageMappings;
 		this.explicitMappings = explicitMappings;
 		this.failedFunc = failedFunc;
+		this.tags = tags;
 		this.storages = new ArrayList<>();
 	}
 
@@ -63,6 +65,13 @@ public class DashRegistryImpl implements DashRegistry {
 	public RegistryStorage<?> getStorage(byte registryPointer) {
 		return storages.get(registryPointer);
 	}
+
+
+	public <D> RegistryStorage<D> getStorage(Class<D> tag) {
+		//noinspection unchecked
+		return (RegistryStorage<D>) getStorage(tags.getByte(tag));
+	}
+
 
 	public void addMapping(Class<?> clazz, byte registryPointer) {
 		storageMappings.put(clazz, registryPointer);

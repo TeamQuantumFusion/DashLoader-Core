@@ -26,7 +26,7 @@ public class DashWeightedBakedModel implements DashModel, Dashable<WeightedBaked
 	}
 
 	public DashWeightedBakedModel(WeightedBakedModel weightedBakedModel, DashRegistry registry) {
-		model = registry.add(weightedBakedModel);
+		model = registry.add(weightedBakedModel.model);
 		weight = weightedBakedModel.weight;
 	}
 

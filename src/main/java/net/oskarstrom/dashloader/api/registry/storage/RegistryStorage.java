@@ -1,9 +1,9 @@
 package net.oskarstrom.dashloader.api.registry.storage;
 
-import net.oskarstrom.dashloader.api.Dashable;
+import net.oskarstrom.dashloader.api.registry.export.ExportData;
 
 public interface RegistryStorage<F> {
 	int add(F object);
 
-	Dashable<F>[] getDashables();
+	ExportData getExportData(byte pos);
 }
