@@ -52,25 +52,19 @@ public class MultiStageRegistryStorage<F, D extends Dashable<F>> implements Regi
 	}
 
 	@Override
-	public ExportData getExportData(byte pos) {
-		//noinspection unchecked
-		List<ThreadManager.PosEntry<D>>[] out = (List<ThreadManager.PosEntry<D>>[]) new List[stages.size()];
-		for (int i = 0; i < stages.size(); i++) {
-			out[i] = new ArrayList<>();
-		}
+	public ExportData getExportData(byte registryPos) {
+		List<List<ThreadManager.PosEntry<D>>> out = new ArrayList<>();
+		stages.forEach((c, i) -> out.add(new ArrayList<>()));
 		for (int i = 0, dashablesSize = dashables.size(); i < dashablesSize; i++) {
 			D dashable = dashables.get(i);
-			out[stages.get(dashable.getClass())].add(new ThreadManager.PosEntry<>(i, dashable));
-		}
-
-		List<ThreadManager.PosEntry<D>[]> result = new ArrayList<>();
-		for (List<ThreadManager.PosEntry<D>> list : out) {
-			//noinspection unchecked
-			ThreadManager.PosEntry<D>[] entries = list.toArray((s) -> (ThreadManager.PosEntry<D>[]) new ThreadManager.PosEntry[0]);
-			result.add(entries);
+			out.get(stages.get(dashable.getClass())).add(new ThreadManager.PosEntry<>(i, dashable));
 		}
 		//noinspection unchecked
-		final ThreadManager.PosEntry<D>[][] posEntries = (ThreadManager.PosEntry<D>[][]) result.toArray(new ThreadManager.PosEntry[0][]);
-		return new MultiStageExportData<>(posEntries, pos, priority);
+		ThreadManager.PosEntry<D>[][] array = (ThreadManager.PosEntry<D>[][]) new ThreadManager.PosEntry[out.size()][];
+		for (int j = 0; j < out.size(); j++) {
+			//noinspection unchecked
+			array[j] = (ThreadManager.PosEntry<D>[]) out.get(j).toArray(ThreadManager.PosEntry[]::new);
+		}
+		return new MultiStageExportData<>(array, registryPos, priority);
 	}
 }
