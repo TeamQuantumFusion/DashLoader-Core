@@ -27,7 +27,7 @@ public class SystemSuiteTest {
 		final Data data = Data.create(10);
 
 		final DashRegistryBuilder registryStorageFactory = DashRegistryBuilder.create();
-		registryStorageFactory.withDashClasses(DashBasicBakedModel.class, DashIdentifier.class, DashMultiPartBakedModel.class, DashSprite.class, DashWeightedBakedModel.class);
+		registryStorageFactory.withDashObjects(DashBasicBakedModel.class, DashIdentifier.class, DashMultiPartBakedModel.class, DashSprite.class, DashWeightedBakedModel.class);
 		final DashRegistry registry = registryStorageFactory.build();
 	}
 

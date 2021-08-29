@@ -145,7 +145,7 @@ public class DashRegistryBuilder {
 		return registry;
 	}
 
-	public DashRegistryBuilder withDashClass(Class<? extends Dashable<?>> dash) {
+	public DashRegistryBuilder withDashObject(Class<? extends Dashable<?>> dash) {
 		entries.add(dash);
 		return this;
 	}
@@ -165,14 +165,14 @@ public class DashRegistryBuilder {
 		return this;
 	}
 
-	public DashRegistryBuilder withDashClass(Class<? extends Dashable<?>> dash, Class<?> forcedTag) {
+	public DashRegistryBuilder withDashObject(Class<? extends Dashable<?>> dash, Class<?> forcedTag) {
 		entries.add(dash);
 		forcedTags.put(dash, forcedTag);
 		return this;
 	}
 
 	@SafeVarargs
-	public final DashRegistryBuilder withDashClasses(Class<? extends Dashable<?>>... dashes) {
+	public final DashRegistryBuilder withDashObjects(Class<? extends Dashable<?>>... dashes) {
 		entries.addAll(Arrays.asList(dashes));
 		return this;
 	}
