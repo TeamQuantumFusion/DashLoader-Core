@@ -1,10 +1,9 @@
 package net.oskarstrom.dashloader.core.system;
 
 import io.activej.serializer.annotations.Serialize;
-import net.oskarstrom.dashloader.api.DashLoaderFactory;
 import net.oskarstrom.dashloader.api.registry.DashExportHandler;
 import net.oskarstrom.dashloader.api.registry.DashRegistry;
-import net.oskarstrom.dashloader.api.registry.storage.RegistryStorageFactory;
+import net.oskarstrom.dashloader.api.registry.DashRegistryBuilder;
 import net.oskarstrom.dashloader.core.system.dashobjects.*;
 import net.oskarstrom.dashloader.core.system.objects.BakedModel;
 import net.oskarstrom.dashloader.core.system.objects.MultiPartBakedModel;
@@ -26,12 +25,10 @@ public class SystemSuiteTest {
 	@Order(1)
 	public void serialization() {
 		final Data data = Data.create(10);
-		final DashRegistry dashRegistry = DashLoaderFactory.createSerializationRegistry((obj, reg) -> {
-			throw new IllegalStateException(obj.getClass().getSimpleName());
-		});
-		final RegistryStorageFactory registryStorageFactory = RegistryStorageFactory.create();
+
+		final DashRegistryBuilder registryStorageFactory = DashRegistryBuilder.create();
 		registryStorageFactory.withDashClasses(DashBasicBakedModel.class, DashIdentifier.class, DashMultiPartBakedModel.class, DashSprite.class, DashWeightedBakedModel.class);
-		registryStorageFactory.build(null);
+		final DashRegistry registry = registryStorageFactory.build();
 	}
 
 	@Test

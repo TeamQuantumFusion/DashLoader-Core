@@ -1,28 +1,37 @@
-package net.oskarstrom.dashloader.api.registry.storage;
+package net.oskarstrom.dashloader.api.registry;
 
+import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.oskarstrom.dashloader.api.Dashable;
 import net.oskarstrom.dashloader.api.annotations.DashObject;
 import net.oskarstrom.dashloader.api.annotations.Dependencies;
 import net.oskarstrom.dashloader.api.annotations.RegistryTag;
-import net.oskarstrom.dashloader.api.registry.DashRegistry;
-import net.oskarstrom.dashloader.api.registry.FactoryConstructor;
+import net.oskarstrom.dashloader.api.registry.storage.MultiRegistryStorage;
+import net.oskarstrom.dashloader.api.registry.storage.RegistryStorage;
+import net.oskarstrom.dashloader.api.registry.storage.SoloRegistryStorage;
+import net.oskarstrom.dashloader.core.registry.DashRegistryImpl;
 import net.oskarstrom.dashloader.core.registry.FactoryConstructorImpl;
 
 import java.util.*;
+import java.util.function.BiFunction;
 
-public class RegistryStorageFactory {
+public class DashRegistryBuilder {
 	private final List<Class<?>> entries;
-	private final Map<Class<?>, Class<?>> forcedTags = new HashMap<>();
-	private final Map<Class<?>, CustomStorageSupplier> customFactoryStorages = new HashMap<>();
+	private final Object2ObjectMap<Class<?>, Class<?>> forcedTags = new Object2ObjectOpenHashMap<>();
+	private final Object2ObjectMap<Class<?>, CustomStorageSupplier> customFactoryStorages = new Object2ObjectOpenHashMap<>();
+	private final Object2ObjectMap<DashRegistryImpl.ExplicitMatcher, Class<?>> explicitMappings = new Object2ObjectOpenHashMap<>();
+	private BiFunction<Object, DashRegistry, Integer> failedFunc = (obj, registry) -> {
+		throw new IllegalStateException("No storage was found for " + obj.getClass().getSimpleName());
+	};
 
-	public RegistryStorageFactory(List<Class<?>> entries) {
+
+	public DashRegistryBuilder(List<Class<?>> entries) {
 		this.entries = entries;
 	}
 
-	public static RegistryStorageFactory create() {
-		return new RegistryStorageFactory(new ArrayList<>());
+	public static DashRegistryBuilder create() {
+		return new DashRegistryBuilder(new ArrayList<>());
 	}
 
 	private static ClassEntry<?, ?>[] createBuildOrder(List<ClassEntry<?, ?>> elements) {
@@ -59,9 +68,10 @@ public class RegistryStorageFactory {
 		}
 
 		if (currentPos != n) {
-			throw new IllegalArgumentException("Dependency overflow! https://www.youtube.com/watch?v=PGNiXGX2nLU.");
+			throw new IllegalArgumentException("Dependency overflow! Meaning it's https://www.youtube.com/watch?v=PGNiXGX2nLU.");
 		}
 
+		//invert
 		for (int left = 0, right = out.length - 1; left < right; left++, right--) {
 			ClassEntry<?, ?> temp = out[left];
 			out[left] = out[right];
@@ -89,7 +99,8 @@ public class RegistryStorageFactory {
 		return ClassEntry.create((Class<D>) dash, forcedTags);
 	}
 
-	public void build(DashRegistry registry) {
+	public DashRegistry build() {
+
 		//create classentries
 		List<ClassEntry<?, ?>> classEntries = new ArrayList<>();
 		for (Class<?> entry : entries) {
@@ -113,7 +124,8 @@ public class RegistryStorageFactory {
 		sortedResults.sort(Comparator.comparingInt(value -> value.maxPriority));
 
 
-		//make storages
+		DashRegistry registry = new DashRegistryImpl(new Object2ByteOpenHashMap<>(), explicitMappings, failedFunc);
+
 		for (int i = 0; i < sortedResults.size(); i++) {
 			StorageMetadata sortedResult = sortedResults.get(i);
 			sortedResult.compileType();
@@ -130,40 +142,50 @@ public class RegistryStorageFactory {
 			}
 		}
 
-
+		return registry;
 	}
 
-	public RegistryStorageFactory withDashClass(Class<? extends Dashable<?>> dash) {
+	public DashRegistryBuilder withDashClass(Class<? extends Dashable<?>> dash) {
 		entries.add(dash);
 		return this;
 	}
 
-	public RegistryStorageFactory withCustomConstructor(Class<?> tag, CustomStorageSupplier constructor) {
+	public DashRegistryBuilder withExplicitMather(DashRegistryImpl.ExplicitMatcher mather, Class<?> target) {
+		explicitMappings.put(mather, target);
+		return this;
+	}
+
+	public DashRegistryBuilder withFailedFunc(BiFunction<Object, DashRegistry, Integer> failedFunc) {
+		this.failedFunc = failedFunc;
+		return this;
+	}
+
+	public DashRegistryBuilder withCustomConstructor(Class<?> tag, CustomStorageSupplier constructor) {
 		customFactoryStorages.put(tag, constructor);
 		return this;
 	}
 
-	public RegistryStorageFactory withDashClass(Class<? extends Dashable<?>> dash, Class<?> forcedTag) {
+	public DashRegistryBuilder withDashClass(Class<? extends Dashable<?>> dash, Class<?> forcedTag) {
 		entries.add(dash);
 		forcedTags.put(dash, forcedTag);
 		return this;
 	}
 
 	@SafeVarargs
-	public final RegistryStorageFactory withDashClasses(Class<? extends Dashable<?>>... dashes) {
+	public final DashRegistryBuilder withDashClasses(Class<? extends Dashable<?>>... dashes) {
 		entries.addAll(Arrays.asList(dashes));
 		return this;
 	}
 
 	@SafeVarargs
-	public final RegistryStorageFactory addTags(Class<?> forcedTag, Class<? extends Dashable<?>>... dashes) {
+	public final DashRegistryBuilder addTags(Class<?> forcedTag, Class<? extends Dashable<?>>... dashes) {
 		for (Class<? extends Dashable<?>> dash : dashes) {
 			forcedTags.put(dash, forcedTag);
 		}
 		return this;
 	}
 
-	public final RegistryStorageFactory addTag(Class<?> forcedTag, Class<? extends Dashable<?>> dash) {
+	public final DashRegistryBuilder addTag(Class<?> forcedTag, Class<? extends Dashable<?>> dash) {
 		forcedTags.put(dash, forcedTag);
 		return this;
 	}

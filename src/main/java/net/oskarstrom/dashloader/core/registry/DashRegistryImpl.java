@@ -1,39 +1,53 @@
 package net.oskarstrom.dashloader.core.registry;
 
 import it.unimi.dsi.fastutil.objects.Object2ByteMap;
-import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.oskarstrom.dashloader.api.registry.DashRegistry;
 import net.oskarstrom.dashloader.api.registry.Pointer;
 import net.oskarstrom.dashloader.api.registry.storage.RegistryStorage;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiFunction;
 
 public class DashRegistryImpl implements DashRegistry {
-	private final Object2ByteMap<Class<?>> storageMappings = new Object2ByteOpenHashMap<>();
-	private final ArrayList<RegistryStorage<?>> storages;
+	private final Object2ByteMap<Class<?>> storageMappings;
+	private final Object2ObjectMap<ExplicitMatcher, Class<?>> explicitMappings;
+	private final List<RegistryStorage<?>> storages;
 	private final BiFunction<Object, DashRegistry, Integer> failedFunc;
 
 
-	public DashRegistryImpl(BiFunction<Object, DashRegistry, Integer> failedFunc) {
+	public DashRegistryImpl(Object2ByteMap<Class<?>> storageMappings,
+							Object2ObjectMap<DashRegistryImpl.ExplicitMatcher, Class<?>> explicitMappings,
+							BiFunction<Object, DashRegistry, Integer> failedFunc) {
+		this.storageMappings = storageMappings;
+		this.explicitMappings = explicitMappings;
 		this.failedFunc = failedFunc;
 		this.storages = new ArrayList<>();
 	}
 
-	public DashRegistryImpl(int size) {
-		this.storages = new ArrayList<>(size);
-		this.failedFunc = (o, r) -> {
-			throw new UnsupportedOperationException("Called add on Deserialization registry");
-		};
-	}
 
 	@Override
 	public <F> int add(F object) {
 		final Class<?> objectClass = object.getClass();
 		if (!storageMappings.containsKey(objectClass)) {
+			for (var matcherPointerEntry : explicitMappings.object2ObjectEntrySet()) {
+				final boolean testResult = matcherPointerEntry.getKey().test(object, this, storageMappings);
+				if (testResult) {
+					if (storageMappings.containsKey(matcherPointerEntry.getValue())) {
+						final byte storagePointer = storageMappings.getByte(matcherPointerEntry.getValue());
+						return addObjectToStorage(object, storagePointer);
+					}
+					break;
+				}
+			}
 			return failedFunc.apply(object, this);
 		}
-		final byte registryPointer = storageMappings.getByte(objectClass);
+		return addObjectToStorage(object, storageMappings.getByte(objectClass));
+	}
+
+
+	private <F> int addObjectToStorage(F object, byte registryPointer) {
 		//noinspection unchecked
 		final RegistryStorage<F> registryStorage = (RegistryStorage<F>) storages.get(registryPointer);
 		final int objectPointer = registryStorage.add(object);
@@ -59,4 +73,8 @@ public class DashRegistryImpl implements DashRegistry {
 		return 0;
 	}
 
+	@FunctionalInterface
+	public interface ExplicitMatcher {
+		<F> boolean test(F object, DashRegistry dashRegistry, Object2ByteMap<Class<?>> mappings);
+	}
 }
