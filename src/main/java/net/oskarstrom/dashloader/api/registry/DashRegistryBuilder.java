@@ -370,7 +370,7 @@ public class DashRegistryBuilder {
 		}
 
 
-		public <F, D extends Dashable<F>> RegistryStorage<F> createStorage(DashRegistry registry, int priority, byte pos) {
+		public <F, D extends Dashable<F>> RegistryStorage<F> createStorage(DashRegistry registry, int priority) {
 
 
 			return switch (type) {
