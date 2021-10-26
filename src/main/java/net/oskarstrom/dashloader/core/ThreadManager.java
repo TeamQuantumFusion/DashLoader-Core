@@ -1,7 +1,6 @@
 package net.oskarstrom.dashloader.core;
 
-import io.activej.serializer.annotations.Deserialize;
-import io.activej.serializer.annotations.Serialize;
+import dev.quantumfusion.hyphen.scan.annotations.Data;
 import net.oskarstrom.dashloader.core.registry.DashExportHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -209,25 +208,8 @@ public class ThreadManager {
 		}
 	}
 
-	public static final class PosEntry<K> {
-		@Serialize
-		public final int pos;
-		@Serialize
-		public final K entry;
-
-		public PosEntry(@Deserialize("pos") int pos, @Deserialize("entry") K entry) {
-			this.pos = pos;
-			this.entry = entry;
-		}
-
-		public int pos() {
-			return pos;
-		}
-
-		public K entry() {
-			return entry;
-		}
-
+	@Data
+	public record PosEntry<K>(int pos, K entry) {
 	}
 
 }

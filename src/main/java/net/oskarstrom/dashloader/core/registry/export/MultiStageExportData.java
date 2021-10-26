@@ -1,26 +1,24 @@
 package net.oskarstrom.dashloader.core.registry.export;
 
-import io.activej.serializer.annotations.Deserialize;
-import io.activej.serializer.annotations.Serialize;
-import io.activej.serializer.annotations.SerializeSubclasses;
+import dev.quantumfusion.hyphen.scan.annotations.Data;
 import net.oskarstrom.dashloader.core.Dashable;
 import net.oskarstrom.dashloader.core.ThreadManager;
 import net.oskarstrom.dashloader.core.registry.DashExportHandler;
 
+import java.util.Arrays;
+import java.util.Objects;
+
+@Data
 public class MultiStageExportData<F, D extends Dashable<F>> implements ExportData<F, D> {
-	@Serialize(order = 0)
-	@SerializeSubclasses(path = 0)
 	// first is stage, then the object
 	public final ThreadManager.PosEntry<D>[][] dashables;
-	@Serialize(order = 1)
 	public final byte registryPos;
-	@Serialize(order = 3)
 	public final int dashablesSize;
 
 
-	public MultiStageExportData(@Deserialize("dashables") ThreadManager.PosEntry<D>[][] dashables,
-								@Deserialize("registryPos") byte registryPos,
-								@Deserialize("dashablesSize") int dashablesSize) {
+	public MultiStageExportData(ThreadManager.PosEntry<D>[][] dashables,
+			byte registryPos,
+			int dashablesSize) {
 		this.dashables = dashables;
 		this.registryPos = registryPos;
 		this.dashablesSize = dashablesSize;
@@ -48,4 +46,18 @@ public class MultiStageExportData<F, D extends Dashable<F>> implements ExportDat
 	}
 
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		MultiStageExportData<?, ?> that = (MultiStageExportData<?, ?>) o;
+		return registryPos == that.registryPos && dashablesSize == that.dashablesSize && Arrays.deepEquals(dashables, that.dashables);
+	}
+
+	@Override
+	public int hashCode() {
+		int result = Objects.hash(registryPos, dashablesSize);
+		result = 31 * result + Arrays.deepHashCode(dashables);
+		return result;
+	}
 }

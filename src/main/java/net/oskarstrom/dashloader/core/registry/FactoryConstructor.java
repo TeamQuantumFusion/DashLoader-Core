@@ -24,7 +24,7 @@ public class FactoryConstructor<F, D extends Dashable<F>> {
 		for (Mode value : Mode.values()) {
 			final Class<?>[] parameters = value.getParameters(rawClass);
 			try {
-				return new FactoryConstructor<>(MethodHandles.publicLookup().findConstructor(dashClass, MethodType.methodType(void.class, parameters)), value, dashClass);
+				return new FactoryConstructor<>(MethodHandles.publicLookup().findStatic(dashClass, "create", MethodType.methodType(dashClass, parameters)), value, dashClass);
 			} catch (NoSuchMethodException ignored) {
 			}
 		}
@@ -77,7 +77,7 @@ public class FactoryConstructor<F, D extends Dashable<F>> {
 
 		public String getExpectedMethod(Class<?> dashClass, Class<?> rawClass) {
 			StringBuilder expectedMethod = new StringBuilder();
-			expectedMethod.append("public ");
+			expectedMethod.append("public static ");
 			expectedMethod.append(dashClass.getSimpleName());
 			expectedMethod.append('(');
 			appendClassParameters(getParameters(rawClass), expectedMethod);

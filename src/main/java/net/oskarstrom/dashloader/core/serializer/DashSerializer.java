@@ -1,42 +1,36 @@
 package net.oskarstrom.dashloader.core.serializer;
 
-import io.activej.serializer.BinarySerializer;
-import io.activej.serializer.stream.StreamInput;
-import io.activej.serializer.stream.StreamOutput;
+import dev.quantumfusion.hyphen.HyphenSerializer;
+import dev.quantumfusion.hyphen.io.ByteBufferIO;
 import net.oskarstrom.dashloader.core.PathConstants;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 public class DashSerializer<O> {
 	public final String name;
 	public final Path startingPath;
-	private final BinarySerializer<O> serializer;
+	private final HyphenSerializer<ByteBufferIO, O> serializer;
 
-	public DashSerializer(String name, BinarySerializer<O> serializer, Path startingPath) {
+	public DashSerializer(String name, HyphenSerializer<ByteBufferIO, O> serializer, Path startingPath) {
 		this.name = name;
 		this.serializer = serializer;
 		this.startingPath = startingPath;
 	}
 
-	public O deserialize(@Nullable String fileName) throws IOException {
-		final String path = fileName == null ? name + PathConstants.DATA_EXTENSION : fileName + PathConstants.DATA_EXTENSION;
-		final InputStream input = Files.newInputStream(startingPath.resolve(path));
-		final StreamInput streamInput = StreamInput.create(input);
-		final O deserialize = streamInput.deserialize(serializer);
-		streamInput.close();
-		return deserialize;
+	public O deserialize() throws IOException {
+		var fileChannel = FileChannel.open(startingPath.resolve(name + PathConstants.DATA_EXTENSION));
+		return serializer.get(ByteBufferIO.wrap(fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size())));
 	}
 
-	public void serialize(@Nullable String fileName, O object) throws IOException {
-		final String path = fileName == null ? name + PathConstants.DATA_EXTENSION : fileName + PathConstants.DATA_EXTENSION;
-		final OutputStream output = Files.newOutputStream(startingPath.resolve(path));
-		final StreamOutput streamOutput = StreamOutput.create(output);
-		streamOutput.serialize(serializer, object);
-		streamOutput.close();
+	public void serialize(O object) throws IOException {
+		final Path resolve = startingPath.resolve(name + PathConstants.DATA_EXTENSION);
+		Files.createDirectories(startingPath);
+		var fileChannel = FileChannel.open(resolve, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ);
+		final ByteBufferIO wrap = ByteBufferIO.wrap(fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, serializer.measure(object)));
+		serializer.put(wrap, object);
 	}
 }

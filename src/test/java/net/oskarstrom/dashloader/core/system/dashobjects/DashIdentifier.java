@@ -1,22 +1,17 @@
 package net.oskarstrom.dashloader.core.system.dashobjects;
 
-import io.activej.serializer.annotations.Serialize;
+import dev.quantumfusion.hyphen.scan.annotations.Data;
 import net.oskarstrom.dashloader.core.Dashable;
 import net.oskarstrom.dashloader.core.annotations.DashObject;
 import net.oskarstrom.dashloader.core.registry.DashExportHandler;
 import net.oskarstrom.dashloader.core.system.objects.Identifier;
 
+
+@Data
 @DashObject(Identifier.class)
-public class DashIdentifier implements Dashable<Identifier> {
-	@Serialize
-	public String string;
-
-	public DashIdentifier(String string) {
-		this.string = string;
-	}
-
-	public DashIdentifier(Identifier identifier) {
-		this.string = identifier.string;
+public record DashIdentifier(String string) implements Dashable<Identifier> {
+	public static DashIdentifier create(Identifier identifier) {
+		return new DashIdentifier(identifier.string);
 	}
 
 	@Override

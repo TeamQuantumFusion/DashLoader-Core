@@ -1,20 +1,16 @@
 package net.oskarstrom.dashloader.core.system.dashobjects;
 
+import dev.quantumfusion.hyphen.scan.annotations.Data;
 import net.oskarstrom.dashloader.core.Dashable;
 import net.oskarstrom.dashloader.core.annotations.DashObject;
 import net.oskarstrom.dashloader.core.registry.DashExportHandler;
 import net.oskarstrom.dashloader.core.system.objects.Sprite;
 
+@Data
 @DashObject(Sprite.class)
-public class DashSprite implements Dashable<Sprite> {
-	public final int veryNice;
-
-	public DashSprite(int veryNice) {
-		this.veryNice = veryNice;
-	}
-
-	public DashSprite(Sprite sprite) {
-		this.veryNice = sprite.veryNice;
+public record DashSprite(int veryNice) implements Dashable<Sprite> {
+	public static DashSprite create(Sprite sprite) {
+		return new DashSprite(sprite.veryNice);
 	}
 
 	@Override

@@ -1,15 +1,14 @@
 package net.oskarstrom.dashloader.core.serializer;
 
-import io.activej.codegen.ClassBuilder;
-import io.activej.codegen.DefiningClassLoader;
-import io.activej.serializer.BinarySerializer;
-import io.activej.serializer.CompatibilityLevel;
-import io.activej.serializer.SerializerBuilder;
+import dev.quantumfusion.hyphen.HyphenSerializer;
+import dev.quantumfusion.hyphen.SerializerFactory;
+import dev.quantumfusion.hyphen.io.ByteBufferIO;
+import dev.quantumfusion.hyphen.scan.annotations.DataSubclasses;
+import net.oskarstrom.dashloader.core.PathConstants;
 import net.oskarstrom.dashloader.core.util.ClassLoaderHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,10 +34,10 @@ public class DashSerializerManager {
 	}
 
 	public <T> DashSerializer<T> loadOrCreateSerializer(String serializerName, Class<T> klazz, Path startingPath, Class<?>... keys) {
-		BinarySerializer<T> serializer;
+		HyphenSerializer<ByteBufferIO, T> serializer;
 		try {
 			//noinspection unchecked
-			Class<BinarySerializer<T>> klaz = (Class<BinarySerializer<T>>) ClassLoaderHelper.findClass(getSerializerFqcn(serializerName));
+			Class<HyphenSerializer<ByteBufferIO, T>> klaz = (Class<HyphenSerializer<ByteBufferIO, T>>) ClassLoaderHelper.findClass(getSerializerFqcn(serializerName));
 			// if the class is already loaded, create the serializer directly
 			serializer = createBinarySerializer(klaz);
 		} catch (ClassNotFoundException e) {
@@ -67,15 +66,15 @@ public class DashSerializerManager {
 		}
 	}
 
-	private <T> BinarySerializer<T> loadSerializer(String serializerName) {
+	private <T> HyphenSerializer<ByteBufferIO, T> loadSerializer(String serializerName) {
 		//TODO change to dlc when activej merged my pr
-		Path path = systemCacheFolder.resolve(serializerName + ".class");
+		Path path = systemCacheFolder.resolve(serializerName + PathConstants.CACHE_EXTENSION);
 		if (!Files.exists(path))
 			return null;
 		try {
 			byte[] bytes = Files.readAllBytes(path);
 			//noinspection unchecked
-			Class<BinarySerializer<T>> serializerClass = (Class<BinarySerializer<T>>) ClassLoaderHelper.defineClass(serializerName, bytes, 0, bytes.length);
+			Class<HyphenSerializer<ByteBufferIO, T>> serializerClass = (Class<HyphenSerializer<ByteBufferIO, T>>) ClassLoaderHelper.defineClass(serializerName, bytes, 0, bytes.length);
 			return createBinarySerializer(serializerClass);
 
 		} catch (IOException e) {
@@ -84,21 +83,19 @@ public class DashSerializerManager {
 		}
 	}
 
-	private <T> BinarySerializer<T> createSerializer(String serializerName, Class<T> klazz, Class<?>... keys) {
-		SerializerBuilder builder = SerializerBuilder.create(DefiningClassLoader.create(ClassLoaderHelper.accessor))
-				.withClassName(serializerName)
-				//TODO change to dlc when activej merged my pr
-				.withGeneratedBytecodePath(systemCacheFolder)
-				.withAnnotationCompatibilityMode()
-				.withCompatibilityLevel(CompatibilityLevel.LEVEL_3_LE);
+	private <T> HyphenSerializer<ByteBufferIO, T> createSerializer(String serializerName, Class<T> klazz, Class<?>... keys) {
+		SerializerFactory<ByteBufferIO, T> factory = SerializerFactory.createDebug(ByteBufferIO.class, klazz);
+		factory.setExportPath(systemCacheFolder.resolve(serializerName + PathConstants.CACHE_EXTENSION));
+		factory.setClassName(serializerName);
+
 		for (Class<?> key : keys) {
 			final var set = subclasses.get(key);
 			if (set == null)
 				throw new IllegalArgumentException("Key \"" + key + "\" not found in subclass registry! This is likely a mistake!");
-			//noinspection unchecked plz stfu
-			builder.withSubclasses(key, new ArrayList(set));
+			factory.addGlobalAnnotation(key, DataSubclasses.class, set.toArray(Class[]::new));
 		}
-		return builder.build(klazz);
+
+		return factory.build();
 	}
 
 	private String getSerializerFqcn(String name) {
@@ -118,19 +115,16 @@ public class DashSerializerManager {
 	}
 
 	private Set<Class<?>> getSubclassesWithKey(Class<?> key) {
-		return subclasses.computeIfAbsent(key, ignored -> new HashSet<>());
+		return subclasses.computeIfAbsent(key, ignored -> new LinkedHashSet<>());
 	}
 
-	private <T> BinarySerializer<T> createBinarySerializer(Class<BinarySerializer<T>> serializerClass) {
+	private <T> HyphenSerializer<ByteBufferIO, T> createBinarySerializer(Class<HyphenSerializer<ByteBufferIO, T>> serializerClass) {
 		// check if class is actually built/generated
 		try {
-			Field field = serializerClass.getField(ClassBuilder.CLASS_BUILDER_MARKER);
-			//noinspection ResultOfMethodCallIgnored
-			field.get(null);
 			return serializerClass.getConstructor().newInstance();
-		} catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException | NoSuchFieldException e) {
+		} catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
 			// fuck checked exceptions lmao
-			throw new AssertionError(e);
+			throw new RuntimeException(e);
 		}
 	}
 

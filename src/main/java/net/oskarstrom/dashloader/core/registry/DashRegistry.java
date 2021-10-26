@@ -2,6 +2,7 @@ package net.oskarstrom.dashloader.core.registry;
 
 import it.unimi.dsi.fastutil.objects.Object2ByteMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import net.oskarstrom.dashloader.core.Dashable;
 import net.oskarstrom.dashloader.core.registry.storage.RegistryStorage;
 
 import java.util.ArrayList;
@@ -64,9 +65,9 @@ public class DashRegistry {
 	}
 
 
-	public <D> RegistryStorage<D> getStorage(Class<D> tag) {
+	public <F, D extends Dashable<F>> RegistryStorage<F> getStorage(Class<D> tag) {
 		//noinspection unchecked
-		return (RegistryStorage<D>) getStorage(getStorageId(tag));
+		return (RegistryStorage<F>) getStorage(getStorageId(tag));
 	}
 
 	public <D> byte getStorageId(Class<D> tag) {

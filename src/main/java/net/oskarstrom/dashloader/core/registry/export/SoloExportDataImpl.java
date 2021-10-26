@@ -1,24 +1,16 @@
 package net.oskarstrom.dashloader.core.registry.export;
 
-import io.activej.serializer.annotations.Deserialize;
-import io.activej.serializer.annotations.Serialize;
+import dev.quantumfusion.hyphen.scan.annotations.Data;
 import net.oskarstrom.dashloader.core.Dashable;
 import net.oskarstrom.dashloader.core.ThreadManager;
 import net.oskarstrom.dashloader.core.registry.DashExportHandler;
 
-public class SoloExportDataImpl<F, D extends Dashable<F>> implements ExportData<F, D> {
-	@Serialize(order = 0)
-	public final D[] dashables;
-	@Serialize(order = 1)
-	public final byte registryPos;
+import java.util.Arrays;
+import java.util.Objects;
 
-
-	public SoloExportDataImpl(@Deserialize("dashables") D[] dashables,
-							  @Deserialize("registryPos") byte registryPos) {
-		this.dashables = dashables;
-		this.registryPos = registryPos;
-	}
-
+@Data
+public record SoloExportDataImpl<F, D extends Dashable<F>>(D[] dashables,
+														   byte registryPos) implements ExportData<F, D> {
 
 	@Override
 	public F[] allocateArray() {
@@ -36,5 +28,20 @@ public class SoloExportDataImpl<F, D extends Dashable<F>> implements ExportData<
 	@Override
 	public byte getPos() {
 		return registryPos;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		SoloExportDataImpl<?, ?> that = (SoloExportDataImpl<?, ?>) o;
+		return registryPos == that.registryPos && Arrays.equals(dashables, that.dashables);
+	}
+
+	@Override
+	public int hashCode() {
+		int result = Objects.hash(registryPos);
+		result = 31 * result + Arrays.hashCode(dashables);
+		return result;
 	}
 }

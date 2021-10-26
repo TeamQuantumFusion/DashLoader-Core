@@ -35,7 +35,7 @@ for portions of the Combined Work that, considered in isolation, are
 based on the Application, and not on the Linked Version.
 
   The "Corresponding Application Code" for a Combined Work means the
-object code and/or source code for the Application, including any data
+object code and/or source code for the Application, including any dataTestThing
 and utility programs needed for reproducing the Combined Work from the
 Application, but excluding the System Libraries of the Combined Work.
 
@@ -47,14 +47,14 @@ without being bound by section 3 of the GNU GPL.
   2. Conveying Modified Versions.
 
   If you modify a copy of the Library, and, in your modifications, a
-facility refers to a function or data to be supplied by an Application
+facility refers to a function or dataTestThing to be supplied by an Application
 that uses the facility (other than as an argument passed when the
 facility is invoked), then you may convey a copy of the modified
 version:
 
    a) under this License, provided that you make a good faith effort to
    ensure that, in the event an Application does not supply the
-   function or data, the facility still operates, and performs
+   function or dataTestThing, the facility still operates, and performs
    whatever part of its purpose remains meaningful, or
 
    b) under the GNU GPL, with none of the additional permissions of
@@ -65,7 +65,7 @@ version:
   The object code form of an Application may incorporate material from
 a header file that is part of the Library.  You may convey such object
 code under terms of your choice, provided that, if the incorporated
-material is not limited to numerical parameters, data structure
+material is not limited to numerical parameters, dataTestThing structure
 layouts and accessors, or small macros, inline functions and templates
 (ten or fewer lines in length), you do both of the following:
 

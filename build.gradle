@@ -13,6 +13,7 @@ version '3.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 java {
@@ -20,13 +21,11 @@ java {
 }
 
 dependencies {
-    api libs.activej.serializer
-    shadow libs.bundles.activej
-    shadow libs.slf4j.api
+    api libs.hyphen
+    shadow libs.hyphen
 
-    implementation libs.snakeyaml
-    shadow libs.snakeyaml
     implementation libs.fastutil
+    implementation libs.jetbrains.annotations
 
     testImplementation libs.junit.jupiter.api
     testRuntimeOnly libs.junit.jupiter.engine
