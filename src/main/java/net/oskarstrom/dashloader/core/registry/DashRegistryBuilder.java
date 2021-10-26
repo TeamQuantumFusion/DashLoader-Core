@@ -32,7 +32,7 @@ public class DashRegistryBuilder {
 
 	/**
 	 * <h1>	create</h1>
-	 * <h3>/kriːˈeɪt/</h3>
+	 * <h3>/wierd characters that are not utf-8/</h3>
 	 * <h2>1. bring (something) into existence.</h2>
 	 * <h4>"he created a thirty-acre lake"</h4>
 	 * <h2>2. make a fuss; complain.</h2>
