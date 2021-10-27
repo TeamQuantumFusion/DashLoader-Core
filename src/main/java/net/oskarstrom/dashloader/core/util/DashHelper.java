@@ -19,8 +19,8 @@ public class DashHelper {
 	}
 
 
-	public static <O, I> O nullable(I input, DashExportHandler registry, BiFunction<I, DashExportHandler, O> func) {
-		return input == null ? null : func.apply(input, registry);
+	public static <O, D, I> O nullable(I input, D data, BiFunction<I, D, O> func) {
+		return input == null ? null : func.apply(input, data);
 	}
 
 	public static <IO> IO nullable(IO input) {
