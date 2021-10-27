@@ -3,14 +3,13 @@ package net.oskarstrom.dashloader.core.system;
 import dev.quantumfusion.hyphen.scan.annotations.Data;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.oskarstrom.dashloader.core.DashLoaderFactory;
+import net.oskarstrom.dashloader.core.DashLoaderCore;
 import net.oskarstrom.dashloader.core.registry.DashExportHandler;
 import net.oskarstrom.dashloader.core.registry.DashRegistry;
-import net.oskarstrom.dashloader.core.registry.DashRegistryBuilder;
-import net.oskarstrom.dashloader.core.registry.export.ExportData;
-import net.oskarstrom.dashloader.core.registry.export.MultiExportDataImpl;
-import net.oskarstrom.dashloader.core.registry.export.MultiStageExportData;
-import net.oskarstrom.dashloader.core.registry.export.SoloExportDataImpl;
+import net.oskarstrom.dashloader.core.registry.regdata.MultiRegistryDataImpl;
+import net.oskarstrom.dashloader.core.registry.regdata.MultiStageRegistryData;
+import net.oskarstrom.dashloader.core.registry.regdata.RegistryData;
+import net.oskarstrom.dashloader.core.registry.regdata.SoloRegistryDataImpl;
 import net.oskarstrom.dashloader.core.serializer.DashSerializer;
 import net.oskarstrom.dashloader.core.serializer.DashSerializerManager;
 import net.oskarstrom.dashloader.core.system.dashobjects.*;
@@ -37,57 +36,54 @@ public class SystemSuiteTest {
 
 	@Test
 	public void serialization() {
+		// data
 		final DataTestThing dataTestThing = DataTestThing.create(10);
-		final DashRegistryBuilder registryStorageFactory = DashRegistryBuilder.create();
-		ClassLoaderHelper.init();
 
-		registryStorageFactory.withDashObjects(DashBasicBakedModel.class, DashIdentifier.class, DashMultiPartBakedModel.class, DashSprite.class, DashWeightedBakedModel.class);
-		final DashRegistry registry = registryStorageFactory.build();
+
+		final DashLoaderCore core = DashLoaderCore.create();
+		core.withDashObjects(DashBasicBakedModel.class, DashIdentifier.class, DashMultiPartBakedModel.class, DashSprite.class, DashWeightedBakedModel.class);
+		final DashRegistry registry = core.createDashRegistry();
+
+		// write data
 		IntList integers = new IntArrayList();
 		for (BakedModel model : dataTestThing.models) {
 			integers.add(registry.add(model));
 		}
 
+		// create serializable data
+		var dashMappingData = new DashMappingData(integers.toIntArray());
+		var registryData = new DashRegistryData(registry.exportStorage(DashModel.class),
+												registry.exportStorage(DashIdentifier.class),
+												registry.exportStorage(DashSprite.class));
 
-		final ExportData<BakedModel, DashModel> modelData = registry.getStorage(DashModel.class).getExportData();
-		final ExportData<Identifier, DashIdentifier> identifierData = registry.getStorage(DashIdentifier.class).getExportData();
-		final ExportData<Sprite, DashSprite> spriteData = registry.getStorage(DashSprite.class).getExportData();
+		//create serializers
+		var manager = core.createSerializationManager(Path.of("./test/").normalize());
+		var registryDataSerializer = manager.loadOrCreateSerializer("RegistryData", DashRegistryData.class, Path.of("./test/thing/").normalize(), DashModel.class, RegistryData.class);
+		var mappingSerializer = manager.loadOrCreateSerializer("ModelData", DashMappingData.class, Path.of("./test/thing/").normalize());
 
-
-		final DashExportHandler exportHandler = DashLoaderFactory.createExportHandler(3);
-		System.out.println(modelData + " / " + modelData.getPos());
-		System.out.println(identifierData + " / " + identifierData.getPos());
-		System.out.println(spriteData + " / " + spriteData.getPos());
-
-		exportHandler.addStorage(modelData);
-		exportHandler.addStorage(identifierData);
-		exportHandler.addStorage(spriteData);
-
-
-		DashSerializerManager manager = new DashSerializerManager(Path.of("./test/").normalize());
-		manager.addSubclasses(ExportData.class, SoloExportDataImpl.class, MultiExportDataImpl.class, MultiStageExportData.class);
-		manager.addSubclasses(DashModel.class, DashBasicBakedModel.class, DashMultiPartBakedModel.class, DashWeightedBakedModel.class);
-
-		final DashSerializer<DashRegistryData> registryDataSerializer = manager.loadOrCreateSerializer("RegistryData", DashRegistryData.class, Path.of("./test/thing/").normalize(), DashModel.class, ExportData.class);
-		final DashSerializer<DashMappingData> mappingSerializer = manager.loadOrCreateSerializer("ModelData", DashMappingData.class, Path.of("./test/thing/").normalize());
-
-		final DashMappingData dashMappingData = new DashMappingData(integers.toIntArray());
-		final DashRegistryData registryData = new DashRegistryData(modelData, identifierData, spriteData);
 		try {
 			registryDataSerializer.serialize(registryData);
 			mappingSerializer.serialize(dashMappingData);
+
 			final DashRegistryData i0 = registryDataSerializer.deserialize();
 			final DashMappingData i1 = mappingSerializer.deserialize();
-			System.out.println(registryData.equals(i0));
-			System.out.println(dashMappingData.equals(i1));
+			System.out.println(i0.equals(registryData));
+			System.out.println(i1.equals(dashMappingData));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	@Test
-	public void deserialization() {
-
+	public void deserialization() throws IOException {
+		ClassLoaderHelper.init();
+		DashSerializerManager manager = new DashSerializerManager(Path.of("./test/").normalize());
+		manager.addSubclasses(RegistryData.class, SoloRegistryDataImpl.class, MultiRegistryDataImpl.class, MultiStageRegistryData.class);
+		manager.addSubclasses(DashModel.class, DashBasicBakedModel.class, DashMultiPartBakedModel.class, DashWeightedBakedModel.class);
+		final DashSerializer<DashRegistryData> registryDataSerializer = manager.loadOrCreateSerializer("RegistryData", DashRegistryData.class, Path.of("./test/thing/").normalize(), DashModel.class, RegistryData.class);
+		final DashSerializer<DashMappingData> mappingSerializer = manager.loadOrCreateSerializer("ModelData", DashMappingData.class, Path.of("./test/thing/").normalize());
+		final DashRegistryData i0 = registryDataSerializer.deserialize();
+		final DashMappingData i1 = mappingSerializer.deserialize();
 	}
 
 
@@ -157,9 +153,9 @@ public class SystemSuiteTest {
 
 	@Data
 	public record DashRegistryData(
-			ExportData<BakedModel, DashModel> modelData,
-			ExportData<Identifier, DashIdentifier> identifierData,
-			ExportData<Sprite, DashSprite> spriteData) {
+			RegistryData<BakedModel, DashModel> modelData,
+			RegistryData<Identifier, DashIdentifier> identifierData,
+			RegistryData<Sprite, DashSprite> spriteData) {
 	}
 
 }

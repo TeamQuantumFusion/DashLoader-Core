@@ -1,4 +1,4 @@
-package net.oskarstrom.dashloader.core.registry.export;
+package net.oskarstrom.dashloader.core.registry.regdata;
 
 import dev.quantumfusion.hyphen.scan.annotations.Data;
 import net.oskarstrom.dashloader.core.Dashable;
@@ -9,14 +9,14 @@ import java.util.Arrays;
 import java.util.Objects;
 
 @Data
-public class MultiStageExportData<F, D extends Dashable<F>> implements ExportData<F, D> {
+public class MultiStageRegistryData<F, D extends Dashable<F>> implements RegistryData<F, D> {
 	// first is stage, then the object
 	public final ThreadManager.PosEntry<D>[][] dashables;
 	public final byte registryPos;
 	public final int dashablesSize;
 
 
-	public MultiStageExportData(ThreadManager.PosEntry<D>[][] dashables,
+	public MultiStageRegistryData(ThreadManager.PosEntry<D>[][] dashables,
 			byte registryPos,
 			int dashablesSize) {
 		this.dashables = dashables;
@@ -50,7 +50,7 @@ public class MultiStageExportData<F, D extends Dashable<F>> implements ExportDat
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		MultiStageExportData<?, ?> that = (MultiStageExportData<?, ?>) o;
+		MultiStageRegistryData<?, ?> that = (MultiStageRegistryData<?, ?>) o;
 		return registryPos == that.registryPos && dashablesSize == that.dashablesSize && Arrays.deepEquals(dashables, that.dashables);
 	}
 

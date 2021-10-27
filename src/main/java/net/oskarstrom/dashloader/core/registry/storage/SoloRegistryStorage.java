@@ -3,7 +3,7 @@ package net.oskarstrom.dashloader.core.registry.storage;
 import net.oskarstrom.dashloader.core.Dashable;
 import net.oskarstrom.dashloader.core.registry.DashRegistry;
 import net.oskarstrom.dashloader.core.registry.FactoryConstructor;
-import net.oskarstrom.dashloader.core.registry.export.SoloExportDataImpl;
+import net.oskarstrom.dashloader.core.registry.regdata.SoloRegistryDataImpl;
 
 public class SoloRegistryStorage<F, D extends Dashable<F>> extends RegistryStorageImpl<F, D> {
 	private final FactoryConstructor<F, D> constructor;
@@ -19,9 +19,9 @@ public class SoloRegistryStorage<F, D extends Dashable<F>> extends RegistryStora
 	}
 
 	@Override
-	public SoloExportDataImpl<F, D> getExportData() {
+	public SoloRegistryDataImpl<F, D> getExportData() {
 		final byte storageId = registry.getStorageId(tag);
 		//noinspection unchecked
-		return new SoloExportDataImpl<>(dashables.toArray(new Dashable[0]), storageId);
+		return new SoloRegistryDataImpl<>(dashables.toArray(new Dashable[0]), storageId);
 	}
 }

@@ -28,6 +28,13 @@ public class FactoryConstructor<F, D extends Dashable<F>> {
 			} catch (NoSuchMethodException ignored) {
 			}
 		}
+		for (Mode value : Mode.values()) {
+			final Class<?>[] parameters = value.getParameters(rawClass);
+			try {
+				return new FactoryConstructor<>(MethodHandles.publicLookup().findConstructor(dashClass, MethodType.methodType(void.class, parameters)), value, dashClass);
+			} catch (NoSuchMethodException ignored) {
+			}
+		}
 		throw new NoSuchMethodException(Mode.FULL.getExpectedMethod(dashClass, rawClass));
 	}
 

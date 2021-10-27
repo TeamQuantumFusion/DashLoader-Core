@@ -1,18 +1,18 @@
 package net.oskarstrom.dashloader.core.registry;
 
 import net.oskarstrom.dashloader.core.Dashable;
-import net.oskarstrom.dashloader.core.registry.export.ExportData;
+import net.oskarstrom.dashloader.core.registry.regdata.RegistryData;
 
 public class DashExportHandler {
 	public final Object[][] data;
-	public final ExportData<?, ?>[] exportdata;
+	public final RegistryData<?, ?>[] exportdata;
 
 	public DashExportHandler(int size) {
 		this.data = new Object[size][];
-		this.exportdata = new ExportData[size];
+		this.exportdata = new RegistryData[size];
 	}
 
-	public void addStorage(ExportData<?, ?> registryStorageData) {
+	public void addStorage(RegistryData<?, ?> registryStorageData) {
 		exportdata[registryStorageData.getPos()] = registryStorageData;
 	}
 
@@ -31,9 +31,9 @@ public class DashExportHandler {
 		}
 	}
 
-	private <F, D extends Dashable<F>> void exportData(ExportData<?, ?> data, int pos) {
+	private <F, D extends Dashable<F>> void exportData(RegistryData<?, ?> data, int pos) {
 		//noinspection unchecked
-		ExportData<F, D> castedData = (ExportData<F, D>) data;
+		RegistryData<F, D> castedData = (RegistryData<F, D>) data;
 		final F[] objects = castedData.allocateArray();
 		this.data[pos] = objects;
 		castedData.export(objects, this);

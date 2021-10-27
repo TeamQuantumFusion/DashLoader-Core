@@ -12,10 +12,10 @@ import net.oskarstrom.dashloader.core.util.DashHelper;
 
 import java.util.Arrays;
 
+@Data
 @DashObject(MultiPartBakedModel.class)
 @Dependencies(DashWeightedBakedModel.class)
 @RegistryTag(DashModel.class)
-@Data
 public record DashMultiPartBakedModel(int[] weightedBakedModels) implements DashModel {
 
 	public static DashMultiPartBakedModel create(MultiPartBakedModel multi, DashRegistry registry) {

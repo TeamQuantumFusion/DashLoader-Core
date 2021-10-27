@@ -1,4 +1,4 @@
-package net.oskarstrom.dashloader.core.registry.export;
+package net.oskarstrom.dashloader.core.registry.regdata;
 
 import dev.quantumfusion.hyphen.scan.annotations.Data;
 import net.oskarstrom.dashloader.core.Dashable;
@@ -9,8 +9,17 @@ import java.util.Arrays;
 import java.util.Objects;
 
 @Data
-public record SoloExportDataImpl<F, D extends Dashable<F>>(D[] dashables,
-														   byte registryPos) implements ExportData<F, D> {
+public class MultiRegistryDataImpl<F, D extends Dashable<F>> implements RegistryData<F, D> {
+	public final D[] dashables;
+	public final byte registryPos;
+
+
+	public MultiRegistryDataImpl(D[] dashables,
+			byte registryPos) {
+		this.dashables = dashables;
+		this.registryPos = registryPos;
+	}
+
 
 	@Override
 	public F[] allocateArray() {
@@ -34,7 +43,7 @@ public record SoloExportDataImpl<F, D extends Dashable<F>>(D[] dashables,
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		SoloExportDataImpl<?, ?> that = (SoloExportDataImpl<?, ?>) o;
+		MultiRegistryDataImpl<?, ?> that = (MultiRegistryDataImpl<?, ?>) o;
 		return registryPos == that.registryPos && Arrays.equals(dashables, that.dashables);
 	}
 

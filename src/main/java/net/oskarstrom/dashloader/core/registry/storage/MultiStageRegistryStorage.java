@@ -5,8 +5,8 @@ import net.oskarstrom.dashloader.core.Dashable;
 import net.oskarstrom.dashloader.core.ThreadManager;
 import net.oskarstrom.dashloader.core.registry.DashRegistry;
 import net.oskarstrom.dashloader.core.registry.FactoryConstructor;
-import net.oskarstrom.dashloader.core.registry.export.ExportData;
-import net.oskarstrom.dashloader.core.registry.export.MultiStageExportData;
+import net.oskarstrom.dashloader.core.registry.regdata.MultiStageRegistryData;
+import net.oskarstrom.dashloader.core.registry.regdata.RegistryData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ public class MultiStageRegistryStorage<F, D extends Dashable<F>> extends MultiRe
 
 
 	@Override
-	public ExportData<F, D> getExportData() {
+	public RegistryData<F, D> getExportData() {
 		final byte storageId = registry.getStorageId(tag);
 		List<List<ThreadManager.PosEntry<D>>> out = new ArrayList<>();
 		stages.forEach((c, i) -> out.add(new ArrayList<>()));
@@ -36,7 +36,7 @@ public class MultiStageRegistryStorage<F, D extends Dashable<F>> extends MultiRe
 			//noinspection unchecked
 			array[j] = (ThreadManager.PosEntry<D>[]) out.get(j).toArray(ThreadManager.PosEntry[]::new);
 		}
-		return new MultiStageExportData<>(array, storageId, dashables.size());
+		return new MultiStageRegistryData<>(array, storageId, dashables.size());
 	}
 
 
