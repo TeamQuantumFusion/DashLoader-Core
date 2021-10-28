@@ -8,7 +8,7 @@ plugins {
 
 }
 
-group 'net.oskarstrom.dashloader'
+group 'dev.quantumfusion.dashloader'
 version '3.0-SNAPSHOT'
 
 repositories {

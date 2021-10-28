@@ -1,4 +1,6 @@
-package net.oskarstrom.dashloader.core;
+package dev.quantumfusion.dashloader.core;
+
+import dev.quantumfusion.dashloader.core.registry.DashRegistryReader;
 
 public interface Dashable<R> {
 	/**
@@ -16,5 +18,5 @@ public interface Dashable<R> {
 	/**
 	 * Runs in parallel returning the target object.
 	 */
-	R toUndash();
+	R export(DashRegistryReader registry);
 }
