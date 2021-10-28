@@ -11,12 +11,12 @@ import java.util.Collection;
 import java.util.List;
 
 public class SoloChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, D> {
-	private final Class<?> targetClass;
+	private final Class<R> targetClass;
 	private final DashConstructor<R, D> constructor;
 
 	private final List<D> dashableList = new ArrayList<>();
 
-	public SoloChunkWriter(byte pos, DashRegistryWriter registry, Class<?> targetClass, DashConstructor<R, D> constructor) {
+	public SoloChunkWriter(byte pos, DashRegistryWriter registry, Class<R> targetClass, DashConstructor<R, D> constructor) {
 		super(pos, registry);
 		this.targetClass = targetClass;
 		this.constructor = constructor;

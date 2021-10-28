@@ -14,7 +14,9 @@ public class DashRegistryWriter {
 	public DashRegistryWriter(ChunkWriter<?, ?>[] chunks) {
 		this.mappings = new Object2ByteOpenHashMap<>();
 		this.chunks = chunks;
+	}
 
+	public void createMappings() {
 		for (int i = 0; i < chunks.length; i++) {
 			for (Class<?> aClass : chunks[i].getClasses()) mappings.put(aClass, (byte) i);
 		}
