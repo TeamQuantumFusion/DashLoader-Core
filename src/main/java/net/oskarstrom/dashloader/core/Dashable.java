@@ -1,7 +1,20 @@
 package net.oskarstrom.dashloader.core;
 
-import net.oskarstrom.dashloader.core.registry.DashExportHandler;
+public interface Dashable<R> {
+	/**
+	 * Runs before toUndash on a single thread
+	 */
+	default void prepare() {
+	}
 
-public interface Dashable<F> {
-	F toUndash(DashExportHandler exportHandler);
+	/**
+	 * Runs after toUndash on a single thread
+	 */
+	default void apply() {
+	}
+
+	/**
+	 * Runs in parallel returning the target object.
+	 */
+	R toUndash();
 }
