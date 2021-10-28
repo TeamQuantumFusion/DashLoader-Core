@@ -50,24 +50,24 @@ public class DashThreading {
 		private final int start;
 		private final int stop;
 		private final D[] dashArray;
-		private final Object[] rawArray;
+		private final Object[] outArray;
 		private final DashRegistryReader registry;
 
-		public UndashTask(int threshold, int start, int stop, D[] dashArray, Object[] rawArray, DashRegistryReader registry) {
+		public UndashTask(int threshold, int start, int stop, D[] dashArray, Object[] outArray, DashRegistryReader registry) {
 			this.threshold = threshold;
 			this.start = start;
 			this.stop = stop;
 			this.dashArray = dashArray;
-			this.rawArray = rawArray;
+			this.outArray = outArray;
 			this.registry = registry;
 		}
 
-		public UndashTask(D[] dashArray, Object[] rawArray, DashRegistryReader registry) {
+		public UndashTask(D[] dashArray, Object[] outArray, DashRegistryReader registry) {
 			this.threshold = dashArray.length / CORES;
 			this.start = 0;
 			this.stop = dashArray.length;
 			this.dashArray = dashArray;
-			this.rawArray = rawArray;
+			this.outArray = outArray;
 			this.registry = registry;
 		}
 
@@ -77,15 +77,15 @@ public class DashThreading {
 			if (size < threshold) computeTask();
 			else {
 				final int middle = start + (size / 2);
-				final UndashTask<R, D> alpha = new UndashTask<>(threshold, start, middle, dashArray, rawArray, registry);
-				final UndashTask<R, D> beta = new UndashTask<>(threshold, middle, stop, dashArray, rawArray, registry);
+				final UndashTask<R, D> alpha = new UndashTask<>(threshold, start, middle, dashArray, outArray, registry);
+				final UndashTask<R, D> beta = new UndashTask<>(threshold, middle, stop, dashArray, outArray, registry);
 				invokeAll(alpha, beta);
 			}
 		}
 
 		private void computeTask() {
 			for (int i = start; i < stop; i++)
-				rawArray[i] = dashArray[i].export(registry);
+				outArray[i] = dashArray[i].export(registry);
 		}
 	}
 
@@ -138,6 +138,9 @@ public class DashThreading {
 	@Data
 	public record DashableEntry<D extends Dashable<?>>(int pos, D dashable) {
 
+		public DashableEntry(int pos, Object dashable) {
+			this(pos, (D) dashable);
+		}
 	}
 
 

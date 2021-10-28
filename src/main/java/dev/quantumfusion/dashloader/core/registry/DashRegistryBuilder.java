@@ -25,7 +25,7 @@ public class DashRegistryBuilder {
 	}
 
 	@SafeVarargs
-	public static DashRegistryWriter createWriter(Class<Dashable<?>>... dashables) {
+	public static DashRegistryWriter createWriter(Class<? extends Dashable<?>>... dashables) {
 		// Compile class entries
 		var classEntries = new ArrayList<DashObjectMetadata<?, ?>>();
 		for (var entry : dashables)
@@ -51,16 +51,18 @@ public class DashRegistryBuilder {
 	private static DashRegistryWriter createDashRegistry(ArrayList<ChunkMetadata> meta) {
 		ChunkWriter<?, ?>[] chunks = new ChunkWriter[meta.size()];
 		DashRegistryWriter writer = new DashRegistryWriter(chunks);
+
 		for (int i = 0; i < meta.size(); i++) {
 			var chunkMeta = meta.get(i);
 			chunkMeta.compileType();
 			chunks[i] = chunkMeta.createWriter(writer, (byte) i);
+			writer.addDashTypeMapping(chunkMeta.dashType, (byte) i);
 		}
-		writer.createMappings();
+		writer.compileMappings();
 		return writer;
 	}
 
-	public static DashObjectMetadata<?, ?>[] calculateBuildOrder(List<DashObjectMetadata<?, ?>> elements) {
+	private static DashObjectMetadata<?, ?>[] calculateBuildOrder(List<DashObjectMetadata<?, ?>> elements) {
 		final int elementsSize = elements.size();
 		final var mapping = new HashMap<Class<?>, DashObjectMetadata<?, ?>>();
 
@@ -110,12 +112,12 @@ public class DashRegistryBuilder {
 
 	public static class ChunkMetadata {
 		public final List<DashObjectMetadata<?, ?>> metas = new ArrayList<>();
-		public final Class<?> tag;
+		public final Class<?> dashType;
 		public Type type = Type.SOLO;
 		public int maxPriority = Integer.MIN_VALUE;
 
-		public ChunkMetadata(Class<?> tag) {
-			this.tag = tag;
+		public ChunkMetadata(Class<?> dashType) {
+			this.dashType = dashType;
 		}
 
 
@@ -195,10 +197,16 @@ public class DashRegistryBuilder {
 		private static <F, D extends Dashable<F>> Class<F> getTargetClass(Class<? extends D> dashClass) {
 			var dashAnnotation = dashClass.getDeclaredAnnotation(DashObject.class);
 			if (dashAnnotation == null)
-				throw new MissingFormatArgumentException("Missing @DashObject annotation on " + dashClass.getSimpleName());
+				throw new RuntimeException("Missing @DashObject annotation on " + dashClass.getSimpleName());
 
 			//noinspection unchecked
-			return (Class<F>) dashAnnotation.value();
+			final Class<F> rawClass = (Class<F>) dashAnnotation.value();
+
+			if (Dashable.class.isAssignableFrom(rawClass))
+				throw new RuntimeException("Target type " + rawClass.getSimpleName() + " is a Dashable in " + dashClass.getSimpleName());
+
+
+			return rawClass;
 		}
 
 		@SuppressWarnings("unchecked")

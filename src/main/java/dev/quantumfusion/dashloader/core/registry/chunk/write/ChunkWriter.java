@@ -23,6 +23,8 @@ public abstract class ChunkWriter<R, D extends Dashable<R>> extends AbstractChun
 
 	public abstract Collection<Class<?>> getClasses();
 
+	public abstract Collection<Class<?>> getDashClasses();
+
 	public abstract AbstractDataChunk<R, D> exportData();
 
 }

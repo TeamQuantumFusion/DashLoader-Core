@@ -5,16 +5,20 @@ import dev.quantumfusion.dashloader.core.api.DashConstructor;
 import dev.quantumfusion.dashloader.core.registry.DashRegistryWriter;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.DataChunk;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MultiChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, D> {
 	private final Object2ObjectMap<Class<?>, DashConstructor<R, D>> mappings;
 
 	private final List<D> dashableList = new ArrayList<>();
+	private final Object2IntMap<R> dedup = new Object2IntOpenHashMap<>();
 
 	public MultiChunkWriter(byte pos, DashRegistryWriter registry, Object2ObjectMap<Class<?>, DashConstructor<R, D>> mappings) {
 		super(pos, registry);
@@ -23,14 +27,22 @@ public class MultiChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, D
 
 	@Override
 	public int add(R object) {
-		final int size = dashableList.size();
+		if (dedup.containsKey(object)) return dedup.getInt(object);
+
+		final int pos = dashableList.size();
 		dashableList.add(mappings.get(object.getClass()).invoke(object, registry));
-		return size;
+		dedup.put(object, pos);
+		return pos;
 	}
 
 	@Override
 	public Collection<Class<?>> getClasses() {
 		return mappings.keySet();
+	}
+
+	@Override
+	public Collection<Class<?>> getDashClasses() {
+		return mappings.values().stream().map(constructor -> constructor.dashClass).collect(Collectors.toList());
 	}
 
 	@Override

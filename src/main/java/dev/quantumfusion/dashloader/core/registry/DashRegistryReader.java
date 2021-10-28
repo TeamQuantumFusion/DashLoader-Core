@@ -20,6 +20,7 @@ public final class DashRegistryReader {
 	public void export() {
 		for (int i = 0; i < dataChunks.length; i++) {
 			var chunk = dataChunks[i];
+			System.out.println("Exporting " + chunk.getClass().getSimpleName());
 			var dataObjects = new Object[chunk.getSize()];
 			data[i] = dataObjects;
 			chunk.export(dataObjects, this);
