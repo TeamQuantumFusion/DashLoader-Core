@@ -5,8 +5,8 @@ import net.oskarstrom.dashloader.core.registry.chunk.data.RegistryChunkData;
 
 import java.util.List;
 
-public class SoloChunkAbstract<R, D extends Dashable<R>> extends AbstractRegistryChunk<R, D> {
-	public SoloChunkAbstract(byte pos) {
+public class MultistageChunk<R, D extends Dashable<R>> extends AbstractRegistryChunk<R, D> {
+	public MultistageChunk(byte pos) {
 		super(pos);
 	}
 
