@@ -3,7 +3,13 @@ package net.oskarstrom.dashloader.core.registry.chunk;
 import net.oskarstrom.dashloader.core.Dashable;
 import net.oskarstrom.dashloader.core.registry.chunk.data.RegistryChunkData;
 
-public class MultiChunk<R, D extends Dashable<R>> implements RegistryChunk<R, D> {
+import java.util.List;
+
+public class SoloChunkAbstract<R, D extends Dashable<R>> extends AbstractRegistryChunk<R, D> {
+	public SoloChunkAbstract(byte pos) {
+		super(pos);
+	}
+
 	@Override
 	public int add(R object) {
 		return 0;
@@ -15,12 +21,12 @@ public class MultiChunk<R, D extends Dashable<R>> implements RegistryChunk<R, D>
 	}
 
 	@Override
-	public RegistryChunkData<R, D> exportData() {
+	public List<Class<?>> getClasses() {
 		return null;
 	}
 
 	@Override
-	public void importData(RegistryChunkData<R, D> data) {
-
+	public RegistryChunkData<R, D> exportData() {
+		return null;
 	}
 }
