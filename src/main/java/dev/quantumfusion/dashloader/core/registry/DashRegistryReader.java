@@ -1,11 +1,10 @@
 package dev.quantumfusion.dashloader.core.registry;
 
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
-import dev.quantumfusion.dashloader.core.registry.chunk.data.DataChunk;
 
 @SuppressWarnings("FinalMethodInFinalClass")
 public final class DashRegistryReader {
-	private final DataChunk<?, ?>[] dataChunks;
+	private final AbstractDataChunk<?, ?>[] dataChunks;
 
 	// Holds an array of the exported datachunks array values.
 	private final Object[][] data;
@@ -14,7 +13,7 @@ public final class DashRegistryReader {
 	 * This is the registry that will be created when the cache is available and when {@link DashRegistryReader#get(int)} will be used.
 	 */
 	public DashRegistryReader(AbstractDataChunk<?, ?>[] data) {
-		this.dataChunks = new DataChunk[data.length];
+		this.dataChunks = data;
 		this.data = new Object[data.length][];
 	}
 
