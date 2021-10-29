@@ -33,7 +33,7 @@ dependencies {
 
 task relocateShadowJar(type: ConfigureShadowRelocation) {
     target = tasks.shadowJar
-    prefix = "net.oskarstrom.dashloader.shadowed"
+    prefix = "dev.quantumfusion.dashloader.shadowed"
 }
 
 tasks.shadowJar.dependsOn relocateShadowJar

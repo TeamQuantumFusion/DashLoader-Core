@@ -5,7 +5,7 @@ import dev.quantumfusion.dashloader.core.api.DashConstructor;
 import dev.quantumfusion.dashloader.core.registry.DashRegistryWriter;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.StagedDataChunk;
-import dev.quantumfusion.dashloader.core.util.DashThreading;
+import dev.quantumfusion.dashloader.core.util.DashableEntry;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 public class StagedChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, D> {
 	private final Object2ObjectMap<Class<?>, StageInfo<R, D>> mappings;
-	private final List<DashThreading.DashableEntry<D>>[] dashableList;
+	private final List<DashableEntry<D>>[] dashableList;
 	private int objectPos = 0;
 
 	public StagedChunkWriter(byte pos, DashRegistryWriter registry, int stages, Object2ObjectMap<Class<?>, StageInfo<R, D>> mappings) {
@@ -31,7 +31,7 @@ public class StagedChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, 
 	public int add(R object) {
 		final StageInfo<R, D> stageInfo = mappings.get(object.getClass());
 		final D dashObject = stageInfo.constructor.invoke(object, registry);
-		dashableList[stageInfo.stage].add(new DashThreading.DashableEntry<>(objectPos, dashObject));
+		dashableList[stageInfo.stage].add(new DashableEntry<>(objectPos, dashObject));
 		return objectPos++;
 	}
 
@@ -48,10 +48,10 @@ public class StagedChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, 
 	@Override
 	@SuppressWarnings("unchecked")
 	public AbstractDataChunk<R, D> exportData() {
-		var out = new DashThreading.DashableEntry[dashableList.length][];
+		var out = new DashableEntry[dashableList.length][];
 
 		for (int i = 0; i < dashableList.length; i++)
-			out[i] = dashableList[i].toArray(DashThreading.DashableEntry[]::new);
+			out[i] = dashableList[i].toArray(DashableEntry[]::new);
 
 		return new StagedDataChunk<R, D>(pos, out, objectPos);
 	}
