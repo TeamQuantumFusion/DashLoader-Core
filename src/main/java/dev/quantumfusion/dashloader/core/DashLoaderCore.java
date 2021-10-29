@@ -25,8 +25,12 @@ public class DashLoaderCore {
 
 	@SafeVarargs
 	public DashLoaderCore(Path cacheFolder, Class<? extends Dashable>... dashables) {
+		DashThreading.init();
 		this.dashObjects = createDashObjectMetadataList(dashables);
 		this.cacheFolder = cacheFolder;
+		try {
+			Files.createDirectories(cacheFolder);
+		} catch (IOException ignored) {}
 	}
 
 	@NotNull
@@ -39,6 +43,12 @@ public class DashLoaderCore {
 	public void setCurrentSubcache(String name) {
 		this.cacheAvailable = Files.exists(cacheFolder.resolve(name + "/"));
 		this.currentSubCache = name;
+
+		if (!this.cacheAvailable) {
+			try {
+				Files.createDirectory(cacheFolder.resolve(name + "/"));
+			} catch (IOException ignored) {}
+		}
 	}
 
 	public boolean isCacheMissing() {
@@ -50,7 +60,6 @@ public class DashLoaderCore {
 	}
 
 	public DashRegistryReader createReader(ChunkDataHolder... holders) {
-		DashThreading.init();
 		final DashRegistryReader reader = DashRegistryBuilder.createReader(holders);
 		reader.export();
 		return reader;

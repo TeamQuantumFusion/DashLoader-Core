@@ -5,8 +5,6 @@ import dev.quantumfusion.dashloader.core.api.DashConstructor;
 import dev.quantumfusion.dashloader.core.registry.DashRegistryWriter;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.DataChunk;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,7 +15,6 @@ public class SoloChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, D>
 	private final DashConstructor<R, D> constructor;
 
 	private final List<D> dashableList = new ArrayList<>();
-	private final Object2IntMap<R> dedup = new Object2IntOpenHashMap<>();
 
 
 	public SoloChunkWriter(byte pos, DashRegistryWriter registry, Class<R> targetClass, DashConstructor<R, D> constructor) {
@@ -28,11 +25,8 @@ public class SoloChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, D>
 
 	@Override
 	public int add(R object) {
-		if (dedup.containsKey(object)) return dedup.getInt(object);
-
 		final int pos = dashableList.size();
 		dashableList.add(constructor.invoke(object, registry));
-		dedup.put(object, pos);
 		return pos;
 	}
 

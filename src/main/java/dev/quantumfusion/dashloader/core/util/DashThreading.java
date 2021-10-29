@@ -14,13 +14,14 @@ public class DashThreading {
 	private static ForkJoinPool THREAD_POOL;
 
 	public static void init() {
+		System.out.println(CORES);
 		THREAD_POOL = new ForkJoinPool(CORES, new ForkJoinPool.ForkJoinWorkerThreadFactory() {
 			private final AtomicInteger threadNumber = new AtomicInteger(1);
 
 			@Override
 			public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
 				final ForkJoinWorkerThread dashThread = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
-				dashThread.setDaemon(true);
+				dashThread.setDaemon(false);
 				dashThread.setName("dashloaderc-thread-" + threadNumber.getAndIncrement());
 				return dashThread;
 			}
@@ -36,11 +37,13 @@ public class DashThreading {
 	}
 
 	public static <R, D extends Dashable<R>> void export(D[] dashables, Object[] data, DashRegistryReader registry) {
+		System.out.println(dashables.length);
 		ensurePoolAlive();
 		THREAD_POOL.invoke(new UndashTask<>(dashables, data, registry));
 	}
 
 	public static <R, D extends Dashable<R>> void export(DashableEntry<D>[] dashables, Object[] data, DashRegistryReader registry) {
+		System.out.println(dashables.length);
 		ensurePoolAlive();
 		THREAD_POOL.invoke(new PositionedUndashTask<>(dashables, data, registry));
 	}
@@ -63,9 +66,9 @@ public class DashThreading {
 		}
 
 		public UndashTask(D[] dashArray, Object[] outArray, DashRegistryReader registry) {
-			this.threshold = dashArray.length / CORES;
 			this.start = 0;
 			this.stop = dashArray.length;
+			this.threshold = Math.max(this.stop / CORES, 8);
 			this.dashArray = dashArray;
 			this.outArray = outArray;
 			this.registry = registry;
@@ -94,24 +97,24 @@ public class DashThreading {
 		private final int start;
 		private final int stop;
 		private final DashableEntry<D>[] dashArray;
-		private final Object[] rawArray;
+		private final Object[] outArray;
 		private final DashRegistryReader registry;
 
-		public PositionedUndashTask(int threshold, int start, int stop, DashableEntry<D>[] dashArray, Object[] rawArray, DashRegistryReader registry) {
+		public PositionedUndashTask(int threshold, int start, int stop, DashableEntry<D>[] dashArray, Object[] outArray, DashRegistryReader registry) {
 			this.threshold = threshold;
 			this.start = start;
 			this.stop = stop;
 			this.dashArray = dashArray;
-			this.rawArray = rawArray;
+			this.outArray = outArray;
 			this.registry = registry;
 		}
 
-		public PositionedUndashTask(DashableEntry<D>[] dashArray, Object[] rawArray, DashRegistryReader registry) {
-			this.threshold = dashArray.length / CORES;
+		public PositionedUndashTask(DashableEntry<D>[] dashArray, Object[] outArray, DashRegistryReader registry) {
 			this.start = 0;
 			this.stop = dashArray.length;
+			this.threshold = Math.max(this.stop / CORES, 8);
 			this.dashArray = dashArray;
-			this.rawArray = rawArray;
+			this.outArray = outArray;
 			this.registry = registry;
 		}
 
@@ -121,8 +124,8 @@ public class DashThreading {
 			if (size < threshold) computeTask();
 			else {
 				final int middle = start + (size / 2);
-				final PositionedUndashTask<R, D> alpha = new PositionedUndashTask<>(threshold, start, middle, dashArray, rawArray, registry);
-				final PositionedUndashTask<R, D> beta = new PositionedUndashTask<>(threshold, middle, stop, dashArray, rawArray, registry);
+				final PositionedUndashTask<R, D> alpha = new PositionedUndashTask<>(threshold, start, middle, dashArray, outArray, registry);
+				final PositionedUndashTask<R, D> beta = new PositionedUndashTask<>(threshold, middle, stop, dashArray, outArray, registry);
 				invokeAll(alpha, beta);
 			}
 		}
@@ -130,14 +133,13 @@ public class DashThreading {
 		private void computeTask() {
 			for (int i = start; i < stop; i++) {
 				final DashableEntry<D> entry = dashArray[i];
-				rawArray[entry.pos] = entry.dashable.export(registry);
+				outArray[entry.pos] = entry.dashable.export(registry);
 			}
 		}
 	}
 
 	@Data
 	public record DashableEntry<D extends Dashable<?>>(int pos, D dashable) {
-
 		public DashableEntry(int pos, Object dashable) {
 			this(pos, (D) dashable);
 		}

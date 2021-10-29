@@ -6,8 +6,6 @@ import dev.quantumfusion.dashloader.core.registry.DashRegistryWriter;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.StagedDataChunk;
 import dev.quantumfusion.dashloader.core.util.DashThreading;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.util.ArrayList;
@@ -17,7 +15,6 @@ import java.util.stream.Collectors;
 
 public class StagedChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, D> {
 	private final Object2ObjectMap<Class<?>, StageInfo<R, D>> mappings;
-	private final Object2IntMap<R> dedup = new Object2IntOpenHashMap<>();
 	private final List<DashThreading.DashableEntry<D>>[] dashableList;
 	private int objectPos = 0;
 
@@ -32,12 +29,9 @@ public class StagedChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, 
 
 	@Override
 	public int add(R object) {
-		if (dedup.containsKey(object)) return dedup.getInt(object);
-
 		final StageInfo<R, D> stageInfo = mappings.get(object.getClass());
 		final D dashObject = stageInfo.constructor.invoke(object, registry);
 		dashableList[stageInfo.stage].add(new DashThreading.DashableEntry<>(objectPos, dashObject));
-		dedup.put(object, objectPos);
 		return objectPos++;
 	}
 

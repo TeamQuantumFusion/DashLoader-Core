@@ -20,19 +20,26 @@ public class TestAll {
 	@Test
 	void name() {
 		// mc data
+		System.out.println("Data creation");
 		VanillaData data = new VanillaData();
 		data.fill();
 
 
+		System.out.println("Core init");
 		DashLoaderCore core = new DashLoaderCore(Path.of("./testing"), IdentifierDash.class, BakedModelDash.class, HoldingBakedModelDash.class, HoldingHoldingBakedModelDash.class);
+		System.out.println("Subcache");
 		core.setCurrentSubcache("main");
+
+		System.out.println("RegistryDataHolder serializer");
 		core.prepareSerializer(RegistryDataHolder.class, ModelDash.class, IdentifierDash.class);
+		System.out.println("RegistryMappings serializer");
 		core.prepareSerializer(RegistryMappings.class);
 
 		if (core.isCacheMissing()) {
-			System.out.println("Caching");
+			System.out.println("Creating Writer");
 			var writer = core.createWriter();
 
+			System.out.println("Writing");
 			// our registryMappings
 			var registryMappings = new RegistryMappings();
 			for (var model : data.models) {
@@ -40,21 +47,28 @@ public class TestAll {
 			}
 
 
+			System.out.println("Exporting");
 			// export the chunks
 			var identifierData = writer.getChunk(IdentifierDash.class).exportData();
 			var modelData = writer.getChunk(ModelDash.class).exportData();
 			final RegistryDataHolder registryDataHolder = new RegistryDataHolder(identifierData, modelData);
 
+			System.out.println("Saving");
 			core.save(registryDataHolder);
 			core.save(registryMappings);
 		} else {
 			System.out.println("Loading cache");
 
 			// loads from file
+			System.out.println("Read from file Data");
 			final RegistryDataHolder registryDataHolder = core.load(RegistryDataHolder.class);
+			System.out.println("Read from file Mappings");
 			final RegistryMappings registryMappings = core.load(RegistryMappings.class);
 
+			System.out.println("Create reader");
 			final DashRegistryReader reader = core.createReader(registryDataHolder);
+
+			System.out.println("Acquire info");
 			VanillaData dataOut = new VanillaData();
 			for (Integer model : registryMappings.models) {
 				dataOut.models.add(reader.get(model));
@@ -97,43 +111,11 @@ public class TestAll {
 
 		public void fill() {
 			final Identifier fsdadfd = new Identifier("fsdadfd");
-			final HoldingHoldingBakedModel fdfsafsd = new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, fsdadfd, "fdfsafsd"), 432));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, fsdadfd, "fdfsafsd"), 432342)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, fsdadfd, "fdfsdsafasdfafsd"), 433422)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, fsdadfd, "fdfsdafsafsd"), 432)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, fsdadfd, "fdffdssafsd"), 43442)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdafdsdfd"), "fdfsdfasafsd"), 4342)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, fsdadfd, "fdfsasfdafsd"), 4232)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, fsdadfd, "fdfsafsd"), 4432)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdsdfsdfadfd"), "fdfsafsd"), 4382)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdadasdfasdffd"), "fdfsafsd"), 442332)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdsdfadfd"), "fdfsafsd"), 435642)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsddadfd"), "fdfsafsd"), 432)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdsdfsdfadfd"), "fdfsafsd"), 432)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdsddfsdfasdfasdfdfd"), "fdfsafsd"), 4132)));
-			models.add(fdfsafsd);
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdasdfasdfdfd"), "fdfsafsd"), 4366662)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, fsdadfd, "fdfsaafdfsd"), 432)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdasdfdfd"), "fdfsasdfaasdffsd"), 466666632)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdfasdadfd"), "fdfsafsd"), 432)));
-			models.add(fdfsafsd);
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("glisco sucks"), "fdfsafsdfaasdfsd"), 43692)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdafasdfdfd"), "fdfsafsd"), 46932)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdaddfasfd"), "fdfsafsd"), 432)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, fsdadfd, "fdfsasdfsdffsd"), 432)));
-			models.add(fdfsafsd);
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdafdsdfd"), "fdfsasdfsdfafsd"), 420)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdadfdfdfd"), "fdfsafsd"), 432)));
-			models.add(fdfsafsd);
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdasdfadfd"), "fdfsafsd"), 432)));
-			models.add(fdfsafsd);
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdaddsfasdffd"), "fdfsafsd"), 432)));
-			models.add(fdfsafsd);
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, fsdadfd, "fdfsasdfasdffsd"), 432)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, fsdadfd, "fdfsaasfdfsd"), 432)));
-			models.add(fdfsafsd);
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, new Identifier("fsdadsdfsdfafd"), "fdfasfdsafsd"), 432)));
-			models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(432, fsdadfd, "fdfsasdfafsd"), 432)));
+
+			for (int i = 0; i < 1000000; i++) {
+				models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(i % 200, fsdadfd, "fdfsafsd" + (i % 200)), i)));
+			}
+
 		}
 
 		@Override

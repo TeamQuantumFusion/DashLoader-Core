@@ -4,8 +4,11 @@ import dev.quantumfusion.dashloader.core.Dashable;
 import dev.quantumfusion.dashloader.core.registry.chunk.write.ChunkWriter;
 import it.unimi.dsi.fastutil.objects.Object2ByteMap;
 import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 public class DashRegistryWriter {
+	private final Object2IntMap<?> dedup = new Object2IntOpenHashMap<>();
 	private final Object2ByteMap<Class<?>> dashTypeMappings;
 	private final Object2ByteMap<Class<?>> mappings;
 	private final ChunkWriter<?, ?>[] chunks;
@@ -36,10 +39,13 @@ public class DashRegistryWriter {
 
 	@SuppressWarnings("unchecked")
 	public <R> int add(R object) {
+		if (dedup.containsKey(object)) return dedup.getInt(object);
 		final var targetClass = object.getClass();
 		final var chunk = (ChunkWriter<R, ?>) chunks[mappings.getByte(targetClass)];
 		final var objectPos = chunk.add(object);
-		return createPointer(objectPos, chunk.pos);
+		final int pointer = createPointer(objectPos, chunk.pos);
+		((Object2IntMap<R>) dedup).put(object, pointer);
+		return pointer;
 	}
 
 	public static int createPointer(int objectPos, byte chunkPos) {

@@ -28,7 +28,7 @@ public final class DashRegistryReader {
 	}
 
 	@SuppressWarnings("unchecked")
-	public final <R> R get(int pointer) {
+	public final <R> R get(final int pointer) {
 		return (R) data[pointer & 0x3f][pointer >>> 6];
 	}
 }

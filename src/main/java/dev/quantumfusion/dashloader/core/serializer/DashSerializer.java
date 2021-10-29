@@ -34,7 +34,7 @@ public class DashSerializer<O> {
 
 	@SafeVarargs
 	public static <O> DashSerializer<O> create(Path cacheFolder, Class<O> holderClass, List<DashObjectMetadata<?, ?>> dashObjects, Class<? extends Dashable>... dashables) {
-		var serializerFileLocation = cacheFolder.resolve(holderClass.getSimpleName().toLowerCase() + "dlc");
+		var serializerFileLocation = cacheFolder.resolve(holderClass.getSimpleName().toLowerCase() + ".dlc");
 		if (Files.exists(serializerFileLocation)) {
 			var classDefiner = new ClassDefiner(Thread.currentThread().getContextClassLoader());
 			try {
@@ -44,6 +44,10 @@ public class DashSerializer<O> {
 				e.printStackTrace();
 			}
 		}
+
+		try {
+			Files.createFile(serializerFileLocation);
+		} catch (IOException ignored) {}
 
 		var factory = SerializerFactory.create(ByteBufferIO.class, holderClass);
 		factory.addGlobalAnnotation(AbstractDataChunk.class, DataSubclasses.class, new Class[]{DataChunk.class, StagedDataChunk.class});
@@ -68,15 +72,16 @@ public class DashSerializer<O> {
 	}
 
 	public void encode(O object, String subCache) throws IOException {
-		Files.createDirectories(cacheFolder.resolve(subCache + "/"));
-		var fileChannel = FileChannel.open(getFilePath(subCache), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ);
-		final ByteBufferIO wrap = ByteBufferIO.wrap(fileChannel.map(FileChannel.MapMode.READ_WRITE, 0, serializer.measure(object)));
-		serializer.put(wrap, object);
+		try (FileChannel channel = FileChannel.open(getFilePath(subCache), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
+			final ByteBufferIO wrap = ByteBufferIO.wrap(channel.map(FileChannel.MapMode.READ_WRITE, 0, serializer.measure(object)));
+			serializer.put(wrap, object);
+		}
 	}
 
 	public O decode(String subCache) throws IOException {
-		var fileChannel = FileChannel.open(getFilePath(subCache));
-		return serializer.get(ByteBufferIO.wrap(fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size())));
+		try (FileChannel channel = FileChannel.open(getFilePath(subCache))) {
+			return serializer.get(ByteBufferIO.wrap(channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size())));
+		}
 	}
 
 	@NotNull
