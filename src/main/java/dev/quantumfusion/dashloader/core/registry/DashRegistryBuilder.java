@@ -1,9 +1,8 @@
 package dev.quantumfusion.dashloader.core.registry;
 
+import dev.quantumfusion.dashloader.core.DashObjectMetadata;
 import dev.quantumfusion.dashloader.core.Dashable;
 import dev.quantumfusion.dashloader.core.api.DashConstructor;
-import dev.quantumfusion.dashloader.core.api.annotation.DashDependencies;
-import dev.quantumfusion.dashloader.core.api.annotation.DashObject;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
 import dev.quantumfusion.dashloader.core.registry.chunk.write.ChunkWriter;
 import dev.quantumfusion.dashloader.core.registry.chunk.write.MultiChunkWriter;
@@ -15,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class DashRegistryBuilder {
-
 	public static DashRegistryReader createReader(ChunkDataHolder... holders) {
 		List<AbstractDataChunk<?, ?>> dataChunks = new ArrayList<>();
 		for (ChunkDataHolder holder : holders) {
@@ -24,13 +22,7 @@ public class DashRegistryBuilder {
 		return new DashRegistryReader(dataChunks.toArray(AbstractDataChunk[]::new));
 	}
 
-	@SafeVarargs
-	public static DashRegistryWriter createWriter(Class<? extends Dashable<?>>... dashables) {
-		// Compile class entries
-		var classEntries = new ArrayList<DashObjectMetadata<?, ?>>();
-		for (var entry : dashables)
-			classEntries.add(DashObjectMetadata.create(entry));
-
+	public static DashRegistryWriter createWriter(List<DashObjectMetadata<?, ?>> classEntries) {
 		// Sort entries by dependencies
 		var buildOrder = calculateBuildOrder(classEntries);
 
@@ -171,64 +163,4 @@ public class DashRegistryBuilder {
 		}
 	}
 
-	public static class DashObjectMetadata<F, D extends Dashable<F>> {
-		public final Class<D> dashClass;
-		public final Class<F> targetClass;
-		public final Class<?> dashType;
-		public final Class<Dashable<?>>[] dependencies;
-		public int referenceCount = 0;
-
-		public DashObjectMetadata(Class<D> dashClass, Class<F> targetClass, Class<?> dashType, Class<Dashable<?>>[] dependencies) {
-			this.dashClass = dashClass;
-			this.targetClass = targetClass;
-			this.dashType = dashType;
-			this.dependencies = dependencies;
-		}
-
-
-		@SuppressWarnings("unchecked")
-		public static <F, D extends Dashable<F>> DashObjectMetadata<F, D> create(Class<?> rawDashClass) {
-			Class<D> dashClass = (Class<D>) rawDashClass;
-			var targetClass = getTargetClass(dashClass);
-			var dependencies = getDependencies(dashClass);
-			return new DashObjectMetadata<>(dashClass, targetClass, getDashType(dashClass), dependencies);
-		}
-
-		private static <F, D extends Dashable<F>> Class<F> getTargetClass(Class<? extends D> dashClass) {
-			var dashAnnotation = dashClass.getDeclaredAnnotation(DashObject.class);
-			if (dashAnnotation == null)
-				throw new RuntimeException("Missing @DashObject annotation on " + dashClass.getSimpleName());
-
-			//noinspection unchecked
-			final Class<F> rawClass = (Class<F>) dashAnnotation.value();
-
-			if (Dashable.class.isAssignableFrom(rawClass))
-				throw new RuntimeException("Target type " + rawClass.getSimpleName() + " is a Dashable in " + dashClass.getSimpleName());
-
-
-			return rawClass;
-		}
-
-		@SuppressWarnings("unchecked")
-		private static <F, D extends Dashable<F>> Class<Dashable<?>>[] getDependencies(Class<? extends D> dashClass) {
-			var dependencyAnnotation = dashClass.getDeclaredAnnotation(DashDependencies.class);
-			if (dependencyAnnotation == null)
-				return (Class<Dashable<?>>[]) new Class[0];
-
-			var dependencies = dependencyAnnotation.value();
-			for (var dependency : dependencies) {
-				if (Arrays.stream(dependency.getInterfaces()).noneMatch(Dashable.class::isAssignableFrom))
-					throw new IllegalArgumentException(dashClass.getSimpleName() + " dependency \"" + dependency.getName() + "\" is not a DashObject.");
-			}
-
-			//noinspection unchecked
-			return (Class<Dashable<?>>[]) dependencies;
-		}
-
-		private static <F, D extends Dashable<F>> Class<?> getDashType(Class<? extends D> dashClass) {
-			final Class<?> anInterface = dashClass.getInterfaces()[0];
-			if (anInterface == Dashable.class) return dashClass;
-			return anInterface;
-		}
-	}
 }

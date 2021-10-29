@@ -4,16 +4,11 @@ import dev.quantumfusion.dashloader.core.objects.Identifier;
 import dev.quantumfusion.dashloader.core.objects.IdentifierDash;
 import dev.quantumfusion.dashloader.core.objects.model.*;
 import dev.quantumfusion.dashloader.core.registry.ChunkDataHolder;
-import dev.quantumfusion.dashloader.core.registry.DashRegistryBuilder;
 import dev.quantumfusion.dashloader.core.registry.DashRegistryReader;
-import dev.quantumfusion.dashloader.core.registry.DashRegistryWriter;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
-import dev.quantumfusion.dashloader.core.serializer.DashSerializer;
-import dev.quantumfusion.dashloader.core.util.DashThreading;
 import dev.quantumfusion.hyphen.scan.annotations.Data;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,44 +19,49 @@ public class TestAll {
 
 	@Test
 	void name() {
-		final DashRegistryWriter writer = DashRegistryBuilder.createWriter(IdentifierDash.class, BakedModelDash.class, HoldingBakedModelDash.class, HoldingHoldingBakedModelDash.class);
-
+		// mc data
 		VanillaData data = new VanillaData();
 		data.fill();
 
-		final Mappings mappings = new Mappings();
-		for (HoldingHoldingBakedModel model : data.models) {
-			mappings.models.add(writer.add(model));
-		}
 
-		var identifierData = writer.getChunk(IdentifierDash.class).exportData();
-		var modelData = writer.getChunk(ModelDash.class).exportData();
+		DashLoaderCore core = new DashLoaderCore(Path.of("./testing"), IdentifierDash.class, BakedModelDash.class, HoldingBakedModelDash.class, HoldingHoldingBakedModelDash.class);
+		core.setCurrentSubcache("main");
+		core.prepareSerializer(RegistryDataHolder.class, ModelDash.class, IdentifierDash.class);
+		core.prepareSerializer(RegistryMappings.class);
 
-		final RegistryDataHolder registryDataHolder = new RegistryDataHolder(identifierData, modelData);
-		final DashSerializer<RegistryDataHolder> dataSerializer = DashSerializer.create(Path.of("./test/registry.data"), RegistryDataHolder.class, writer, ModelDash.class, IdentifierDash.class);
-		final DashSerializer<Mappings> mapSerializer = DashSerializer.create(Path.of("./test/mappings.data"), Mappings.class, writer);
+		if (core.isCacheMissing()) {
+			System.out.println("Caching");
+			var writer = core.createWriter();
+
+			// our registryMappings
+			var registryMappings = new RegistryMappings();
+			for (var model : data.models) {
+				registryMappings.models.add(writer.add(model));
+			}
 
 
-		try {
-			dataSerializer.encode(registryDataHolder);
-			mapSerializer.encode(mappings);
-			final RegistryDataHolder dataHolder = dataSerializer.decode();
-			final Mappings mappings1 = mapSerializer.decode();
+			// export the chunks
+			var identifierData = writer.getChunk(IdentifierDash.class).exportData();
+			var modelData = writer.getChunk(ModelDash.class).exportData();
+			final RegistryDataHolder registryDataHolder = new RegistryDataHolder(identifierData, modelData);
 
-			DashThreading.init();
-			final DashRegistryReader reader = DashRegistryBuilder.createReader(dataHolder);
-			reader.export();
+			core.save(registryDataHolder);
+			core.save(registryMappings);
+		} else {
+			System.out.println("Loading cache");
 
+			// loads from file
+			final RegistryDataHolder registryDataHolder = core.load(RegistryDataHolder.class);
+			final RegistryMappings registryMappings = core.load(RegistryMappings.class);
+
+			final DashRegistryReader reader = core.createReader(registryDataHolder);
 			VanillaData dataOut = new VanillaData();
-			for (Integer model : mappings1.models) {
+			for (Integer model : registryMappings.models) {
 				dataOut.models.add(reader.get(model));
 			}
 
-			System.out.println(dataOut.equals(data));
-		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println(data.equals(dataOut));
 		}
-
 	}
 
 	@Data
@@ -76,13 +76,13 @@ public class TestAll {
 	}
 
 	@Data
-	public static class Mappings {
+	public static class RegistryMappings {
 		public List<Integer> models = new ArrayList<>();
 
-		public Mappings() {
+		public RegistryMappings() {
 		}
 
-		public Mappings(List<Integer> models) {
+		public RegistryMappings(List<Integer> models) {
 			this.models = models;
 		}
 	}
