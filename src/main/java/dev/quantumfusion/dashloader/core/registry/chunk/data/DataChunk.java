@@ -9,14 +9,24 @@ import dev.quantumfusion.hyphen.scan.annotations.Data;
 public class DataChunk<R, D extends Dashable<R>> extends AbstractDataChunk<R, D> {
 	public final D[] dashables;
 
-	public DataChunk(byte pos, D[] dashables) {
-		super(pos);
+	public DataChunk(byte pos, String name, D[] dashables) {
+		super(pos, name);
 		this.dashables = dashables;
+	}
+
+	@Override
+	public void prepare(DashRegistryReader reader) {
+		for (D dashable : dashables) dashable.prepare(reader);
 	}
 
 	@Override
 	public void export(Object[] data, DashRegistryReader registry) {
 		DashThreading.export(dashables, data, registry);
+	}
+
+	@Override
+	public void apply(DashRegistryReader reader) {
+		for (D dashable : dashables) dashable.apply(reader);
 	}
 
 	@Override

@@ -49,15 +49,15 @@ public class DashSerializer<O> {
 			Files.createFile(serializerFileLocation);
 		} catch (IOException ignored) {}
 
-		var factory = SerializerFactory.create(ByteBufferIO.class, holderClass);
+		var factory = SerializerFactory.createDebug(ByteBufferIO.class, holderClass);
 		factory.addGlobalAnnotation(AbstractDataChunk.class, DataSubclasses.class, new Class[]{DataChunk.class, StagedDataChunk.class});
 		factory.setClassName(getSerializerName(holderClass));
 		factory.setExportPath(serializerFileLocation);
 		for (Class<? extends Dashable> dashable : dashables) {
-			List<Class<?>> dashClasses = new ArrayList<>();
-			for (DashObjectMetadata<?, ?> dashObject : dashObjects) {
+			var dashClasses = new ArrayList<Class<?>>();
+			for (var dashObject : dashObjects)
 				if (dashable == dashObject.dashType) dashClasses.add(dashObject.dashClass);
-			}
+
 			dashClasses.remove(dashable);
 			if (dashClasses.size() > 0)
 				factory.addGlobalAnnotation(dashable, DataSubclasses.class, dashClasses.toArray(Class[]::new));

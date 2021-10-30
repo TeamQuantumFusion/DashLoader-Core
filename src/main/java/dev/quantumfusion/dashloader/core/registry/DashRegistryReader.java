@@ -18,12 +18,21 @@ public final class DashRegistryReader {
 	}
 
 	public void export() {
+		System.out.println();
 		for (int i = 0; i < dataChunks.length; i++) {
 			var chunk = dataChunks[i];
-			System.out.println("Exporting " + chunk.getClass().getSimpleName());
+			System.out.print(i + ": " + chunk.name + " Allocating " + chunk.getSize() + " | ");
 			var dataObjects = new Object[chunk.getSize()];
 			data[i] = dataObjects;
+
+			System.out.print("Preparing | ");
+			chunk.prepare(this);
+
+			System.out.print("Exporting | ");
 			chunk.export(dataObjects, this);
+
+			System.out.println("Applying");
+			chunk.apply(this);
 		}
 	}
 

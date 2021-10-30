@@ -13,11 +13,11 @@ public class DashObjectMetadata<F, D extends Dashable<F>> {
 
 	public final Class<D> dashClass;
 	public final Class<F> targetClass;
-	public final Class<?> dashType;
+	public final Class<? extends Dashable<?>> dashType;
 	public final Class<Dashable<?>>[] dependencies;
 	public int referenceCount = 0;
 
-	public DashObjectMetadata(Class<D> dashClass, Class<F> targetClass, Class<?> dashType, Class<Dashable<?>>[] dependencies) {
+	public DashObjectMetadata(Class<D> dashClass, Class<F> targetClass, Class<? extends Dashable<?>> dashType, Class<Dashable<?>>[] dependencies) {
 		this.dashClass = dashClass;
 		this.targetClass = targetClass;
 		this.dashType = dashType;
@@ -66,10 +66,10 @@ public class DashObjectMetadata<F, D extends Dashable<F>> {
 		return (Class<Dashable<?>>[]) dependencies;
 	}
 
-	private static <F, D extends Dashable<F>> Class<?> getDashType(Class<? extends D> dashClass) {
+	private static <F, D extends Dashable<F>> Class<? extends Dashable<?>> getDashType(Class<? extends D> dashClass) {
 		final Class<?> anInterface = dashClass.getInterfaces()[0];
 		if (anInterface == Dashable.class) return dashClass;
-		return anInterface;
+		return (Class<? extends Dashable<?>>) anInterface;
 	}
 
 	public String getFileName() {

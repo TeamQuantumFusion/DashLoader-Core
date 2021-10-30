@@ -19,65 +19,91 @@ public class DashRegistryBuilder {
 		for (ChunkDataHolder holder : holders) {
 			dataChunks.addAll(holder.getChunks());
 		}
-		return new DashRegistryReader(dataChunks.toArray(AbstractDataChunk[]::new));
+		AbstractDataChunk<?, ?>[] out = new AbstractDataChunk[dataChunks.size()];
+		for (AbstractDataChunk<?, ?> dataChunk : dataChunks) {
+			out[dataChunk.pos] = dataChunk;
+		}
+		return new DashRegistryReader(out);
 	}
 
-	public static DashRegistryWriter createWriter(List<DashObjectMetadata<?, ?>> classEntries) {
-		// Sort entries by dependencies
-		var buildOrder = calculateBuildOrder(classEntries);
+	public static DashRegistryWriter createWriter(List<DashObjectMetadata<?, ? extends Dashable<?>>> classEntries) {
+		var typeMappings = new LinkedHashMap<Class<?>, List<Class<? extends Dashable<?>>>>();
+		classEntries.forEach(d -> typeMappings.computeIfAbsent(d.dashType, aClass -> new ArrayList<>()).add(d.dashClass));
 
-		// Create StorageMetadata from entries sharing the same DashInterface
-		var mappedEntries = new LinkedHashMap<Class<?>, ChunkMetadata>();
-		for (int pos = 0; pos < buildOrder.length; pos++) {
-			var classEntry = buildOrder[pos];
-			mappedEntries.computeIfAbsent(classEntry.dashType, (l) -> new ChunkMetadata(classEntry.dashType)).add(classEntry, pos);
+		var chunks = new ArrayList<ReferenceType<DashObjectHolder<?, ? extends Dashable<?>>>>();
+		for (var classEntry : classEntries) {
+			DashObjectHolder<?, ? extends Dashable<?>> info = new DashObjectHolder<>(classEntry);
+			for (var dependency : classEntry.dependencies)
+				info.dependencies.addAll(typeMappings.getOrDefault(dependency, Collections.singletonList(dependency)));
+
+			chunks.add(info.create());
 		}
 
-		// sort StorageMetadata dependant on their priorities
-		var sortedResults = new ArrayList<>(mappedEntries.values());
-		sortedResults.sort(Comparator.comparingInt(value -> value.maxPriority));
-		return createDashRegistry(sortedResults);
+
+		// Sort entries by dependencies
+		final ReferenceType<DashObjectHolder<?, ? extends Dashable<?>>>[] meta = calculateBuildOrder(chunks);
+
+		List<ChunkInfo<?, ? extends Dashable<?>>> infos = new ArrayList<>();
+		for (Class<?> aClass : typeMappings.keySet()) {
+			infos.add(new ChunkInfo(aClass, meta));
+		}
+
+		infos.sort(Comparator.comparingInt(value -> value.priority));
+		for (int i = 0; i < infos.size(); i++) {
+			ChunkInfo<?, ? extends Dashable<?>> info = infos.get(i);
+			StringJoiner joiner = new StringJoiner(", ");
+			for (DashObjectMetadata<?, ? extends Dashable<?>> dashObject : info.dashObjects) {
+				StringJoiner joiner2 = new StringJoiner(", ", "(", ")");
+				for (Class<Dashable<?>> dependency : dashObject.dependencies) {
+					joiner2.add(dependency.getSimpleName());
+				}
+				joiner.add(dashObject.dashClass.getSimpleName() + joiner2);
+			}
+			System.out.println(i + " > " + info.dashType.getSimpleName() + " | " + joiner);
+		}
+
+		return createDashRegistry(infos);
 	}
 
 	@NotNull
-	private static DashRegistryWriter createDashRegistry(ArrayList<ChunkMetadata> meta) {
-		ChunkWriter<?, ?>[] chunks = new ChunkWriter[meta.size()];
+	private static DashRegistryWriter createDashRegistry(List<ChunkInfo<?, ? extends Dashable<?>>> infos) {
+		ChunkWriter<?, ?>[] chunks = new ChunkWriter[infos.size()];
 		DashRegistryWriter writer = new DashRegistryWriter(chunks);
 
-		for (int i = 0; i < meta.size(); i++) {
-			var chunkMeta = meta.get(i);
-			chunkMeta.compileType();
-			chunks[i] = chunkMeta.createWriter(writer, (byte) i);
-			writer.addDashTypeMapping(chunkMeta.dashType, (byte) i);
+		for (int i = 0; i < infos.size(); i++) {
+			ChunkInfo<?, ? extends Dashable<?>> dashObjectHolder = infos.get(i);
+			chunks[i] = dashObjectHolder.compile(writer, (byte) i);
+			writer.addDashTypeMapping(dashObjectHolder.dashType, (byte) i);
 		}
+
 		writer.compileMappings();
 		return writer;
 	}
 
-	private static DashObjectMetadata<?, ?>[] calculateBuildOrder(List<DashObjectMetadata<?, ?>> elements) {
+	private static <O> ReferenceType<O>[] calculateBuildOrder(List<ReferenceType<O>> elements) {
 		final int elementsSize = elements.size();
-		final var mapping = new HashMap<Class<?>, DashObjectMetadata<?, ?>>();
+		final var mapping = new HashMap<Class<?>, ReferenceType<O>>();
 
 		for (var element : elements)
-			mapping.put(element.dashClass, element);
+			mapping.put(element.self, element);
 
 		for (var element : elements) {
 			for (var dependency : element.dependencies)
-				mapping.get(dependency).referenceCount++;
+				mapping.get(dependency).references++;
 		}
 
-		var queue = new ArrayDeque<DashObjectMetadata<?, ?>>(elementsSize);
+		var queue = new ArrayDeque<ReferenceType<O>>(elementsSize);
 		for (var element : elements) {
-			if (mapping.get(element.dashClass).referenceCount == 0) queue.offer(element);
+			if (mapping.get(element.self).references == 0) queue.offer(element);
 		}
 
 		int currentPos = 0;
-		var out = new DashObjectMetadata[elementsSize];
+		var out = new ReferenceType[elementsSize];
 		while (!queue.isEmpty()) {
 			var element = queue.poll();
 			out[currentPos++] = element;
 			for (var dependency : element.dependencies) {
-				if (--mapping.get(dependency).referenceCount == 0)
+				if (--mapping.get(dependency).references == 0)
 					queue.offer(mapping.get(dependency));
 
 			}
@@ -96,71 +122,82 @@ public class DashRegistryBuilder {
 		return out;
 	}
 
-	public enum Type {
-		SOLO,
-		MULTI,
-		STAGED;
+	private static class ReferenceType<O> {
+		private final O object;
+		private final Class<?> self;
+		private final List<Class<?>> dependencies;
+		private int references = 0;
+
+		public ReferenceType(O object, Class<?> self, List<Class<?>> dependencies) {
+			this.object = object;
+			this.self = self;
+			this.dependencies = dependencies;
+		}
 	}
 
-	public static class ChunkMetadata {
-		public final List<DashObjectMetadata<?, ?>> metas = new ArrayList<>();
-		public final Class<?> dashType;
-		public Type type = Type.SOLO;
-		public int maxPriority = Integer.MIN_VALUE;
+	public static class DashObjectHolder<R, D extends Dashable<R>> {
+		private final DashObjectMetadata<R, D> metadata;
+		private final List<Class<?>> dependencies = new ArrayList<>();
 
-		public ChunkMetadata(Class<?> dashType) {
+		public DashObjectHolder(DashObjectMetadata<R, D> metadata) {
+			this.metadata = metadata;
+		}
+
+		public ReferenceType<DashObjectHolder<?, ? extends Dashable<?>>> create() {
+			return new ReferenceType<>(this, metadata.dashClass, dependencies);
+		}
+	}
+
+	public static class ChunkInfo<R, D extends Dashable<R>> {
+		private final Class<?> dashType;
+		private final List<DashObjectMetadata<R, D>> dashObjects = new ArrayList<>();
+		private int priority = Integer.MIN_VALUE;
+
+		public ChunkInfo(Class<?> dashType, ReferenceType<DashObjectHolder<R, D>>[] dashObjects) {
 			this.dashType = dashType;
-		}
-
-
-		public void add(DashObjectMetadata<?, ?> dashObjectMetadata, int priority) {
-			if (priority > this.maxPriority)
-				this.maxPriority = priority;
-			metas.add(dashObjectMetadata);
-		}
-
-
-		@SuppressWarnings("unchecked")
-		public <R, D extends Dashable<R>> ChunkWriter<R, D> createWriter(DashRegistryWriter registry, byte pos) {
-			return switch (type) {
-				case SOLO -> {
-					var meta = (DashObjectMetadata<R, D>) metas.get(0);
-					var constructor = (DashConstructor<R, D>) DashConstructor.create(meta.dashClass, meta.targetClass);
-					yield new SoloChunkWriter<>(pos, registry, meta.targetClass, constructor);
+			for (int i = 0; i < dashObjects.length; i++) {
+				final ReferenceType<DashObjectHolder<R, D>> dashObject = dashObjects[i];
+				if (dashObject.object.metadata.dashType == dashType) {
+					this.dashObjects.add(dashObject.object.metadata);
+					this.priority = i;
 				}
-				case MULTI -> {
-					var mappings = new Object2ObjectOpenHashMap<Class<?>, DashConstructor<R, D>>();
-					for (var meta : metas) {
-						mappings.put(meta.targetClass, DashConstructor.create(meta.dashClass, meta.targetClass));
-					}
-					yield new MultiChunkWriter<>(pos, registry, mappings);
-				}
-				case STAGED -> {
-					var stagesOut = new Object2ObjectOpenHashMap<Class<?>, StagedChunkWriter.StageInfo<R, D>>();
-					for (int stage = 0; stage < metas.size(); stage++) {
-						var meta = metas.get(stage);
-						stagesOut.put(meta.targetClass, new StagedChunkWriter.StageInfo<>(DashConstructor.create(meta.dashClass, meta.targetClass), stage));
-					}
-
-					yield new StagedChunkWriter<>(pos, registry, metas.size(), stagesOut);
-				}
-			};
-		}
-
-		public void compileType() {
-			if (metas.size() == 1) type = Type.SOLO;
-			else {
-				for (var meta : metas)
-					for (var dependency : meta.dependencies)
-						for (var dependencyMeta : metas)
-							if (dependency.equals(dependencyMeta.dashClass)) {
-								type = Type.STAGED;
-								return;
-							}
-
-				type = Type.MULTI;
 			}
 		}
+
+		public boolean anyInternalReferences() {
+			for (var dashObject : dashObjects) {
+				for (var dependency : dashObject.dependencies) {
+					for (var object : dashObjects) {
+						if (dependency == object.dashClass) return true;
+					}
+				}
+			}
+			return false;
+		}
+
+		public ChunkWriter<R, D> compile(DashRegistryWriter writer, byte pos) {
+			if (dashObjects.size() == 1) {
+				var meta = (DashObjectMetadata<R, D>) dashObjects.get(0);
+				return new SoloChunkWriter<>(pos, writer, meta.targetClass, DashConstructor.create(meta.dashClass, meta.targetClass), dashType);
+			}
+
+			if (anyInternalReferences()) {
+				var map = new Object2ObjectOpenHashMap<Class<?>, StagedChunkWriter.StageInfo<R, D>>();
+				for (int stage = 0; stage < dashObjects.size(); stage++) {
+					var meta = dashObjects.get(stage);
+					map.put(meta.targetClass, new StagedChunkWriter.StageInfo<>(DashConstructor.create(meta.dashClass, meta.targetClass), stage));
+				}
+				return new StagedChunkWriter<>(pos, writer, dashObjects.size(), map, dashType);
+			} else {
+				var map = new Object2ObjectOpenHashMap<Class<?>, DashConstructor<R, D>>();
+				for (var dashObject : dashObjects)
+					map.put(dashObject.targetClass, DashConstructor.create(dashObject.dashClass, dashObject.targetClass));
+
+				return new MultiChunkWriter<>(pos, writer, map, dashType);
+			}
+
+		}
 	}
+
 
 }

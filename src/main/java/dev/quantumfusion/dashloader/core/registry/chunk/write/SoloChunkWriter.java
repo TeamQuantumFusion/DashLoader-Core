@@ -13,14 +13,16 @@ import java.util.List;
 public class SoloChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, D> {
 	private final Class<R> targetClass;
 	private final DashConstructor<R, D> constructor;
+	private final Class<?> dashType;
 
 	private final List<D> dashableList = new ArrayList<>();
 
 
-	public SoloChunkWriter(byte pos, DashRegistryWriter registry, Class<R> targetClass, DashConstructor<R, D> constructor) {
+	public SoloChunkWriter(byte pos, DashRegistryWriter registry, Class<R> targetClass, DashConstructor<R, D> constructor, Class<?> dashType) {
 		super(pos, registry);
 		this.targetClass = targetClass;
 		this.constructor = constructor;
+		this.dashType = dashType;
 	}
 
 	@Override
@@ -42,6 +44,6 @@ public class SoloChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, D>
 
 	@Override
 	public AbstractDataChunk<R, D> exportData() {
-		return new DataChunk<>(pos, dashableList.toArray(Dashable[]::new));
+		return new DataChunk<>(pos, dashType.getSimpleName(), dashableList.toArray(Dashable[]::new));
 	}
 }

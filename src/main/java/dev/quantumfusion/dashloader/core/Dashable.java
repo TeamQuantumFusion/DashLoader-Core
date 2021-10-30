@@ -6,13 +6,13 @@ public interface Dashable<R> {
 	/**
 	 * Runs before toUndash on a single thread
 	 */
-	default void prepare() {
+	default void prepare(DashRegistryReader writer) {
 	}
 
 	/**
 	 * Runs after toUndash on a single thread
 	 */
-	default void apply() {
+	default void apply(DashRegistryReader reader) {
 	}
 
 	/**

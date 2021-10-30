@@ -24,7 +24,8 @@ public class DashRegistryWriter {
 
 	void compileMappings() {
 		for (int i = 0; i < chunks.length; i++) {
-			for (Class<?> aClass : chunks[i].getClasses()) mappings.put(aClass, (byte) i);
+			for (Class<?> aClass : chunks[i].getClasses())
+				mappings.put(aClass, (byte) i);
 		}
 	}
 

@@ -14,18 +14,24 @@ import java.util.stream.Collectors;
 
 public class MultiChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, D> {
 	private final Object2ObjectMap<Class<?>, DashConstructor<R, D>> mappings;
+	private final Class<?> dashType;
 
 	private final List<D> dashableList = new ArrayList<>();
 
-	public MultiChunkWriter(byte pos, DashRegistryWriter registry, Object2ObjectMap<Class<?>, DashConstructor<R, D>> mappings) {
+	public MultiChunkWriter(byte pos, DashRegistryWriter registry, Object2ObjectMap<Class<?>, DashConstructor<R, D>> mappings, Class<?> dashType) {
 		super(pos, registry);
 		this.mappings = mappings;
+		this.dashType = dashType;
 	}
 
 	@Override
 	public int add(R object) {
 		final int pos = dashableList.size();
-		dashableList.add(mappings.get(object.getClass()).invoke(object, registry));
+		final DashConstructor<R, D> rdDashConstructor = mappings.get(object.getClass());
+		if (rdDashConstructor == null)
+			throw new RuntimeException("Cannot find a constructor for " + object.getClass());
+
+		dashableList.add(rdDashConstructor.invoke(object, registry));
 		return pos;
 	}
 
@@ -41,6 +47,6 @@ public class MultiChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, D
 
 	@Override
 	public AbstractDataChunk<R, D> exportData() {
-		return new DataChunk<>(pos, dashableList.toArray(Dashable[]::new));
+		return new DataChunk<>(pos, dashType.getSimpleName(), dashableList.toArray(Dashable[]::new));
 	}
 }

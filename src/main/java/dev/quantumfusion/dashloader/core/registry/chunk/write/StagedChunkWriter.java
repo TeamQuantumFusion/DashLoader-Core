@@ -16,20 +16,25 @@ import java.util.stream.Collectors;
 public class StagedChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, D> {
 	private final Object2ObjectMap<Class<?>, StageInfo<R, D>> mappings;
 	private final List<DashableEntry<D>>[] dashableList;
+	private final Class<?> dashType;
 	private int objectPos = 0;
 
-	public StagedChunkWriter(byte pos, DashRegistryWriter registry, int stages, Object2ObjectMap<Class<?>, StageInfo<R, D>> mappings) {
+	public StagedChunkWriter(byte pos, DashRegistryWriter registry, int stages, Object2ObjectMap<Class<?>, StageInfo<R, D>> mappings, Class<?> dashType) {
 		super(pos, registry);
 		this.mappings = mappings;
 		//noinspection unchecked
 		this.dashableList = new List[stages];
+		this.dashType = dashType;
 		for (int i = 0; i < this.dashableList.length; i++)
 			dashableList[i] = new ArrayList<>();
 	}
 
 	@Override
 	public int add(R object) {
-		final StageInfo<R, D> stageInfo = mappings.get(object.getClass());
+		var stageInfo = mappings.get(object.getClass());
+		if (stageInfo == null)
+			throw new RuntimeException("Cannot find a constructor for " + object.getClass());
+
 		final D dashObject = stageInfo.constructor.invoke(object, registry);
 		dashableList[stageInfo.stage].add(new DashableEntry<>(objectPos, dashObject));
 		return objectPos++;
@@ -53,7 +58,7 @@ public class StagedChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, 
 		for (int i = 0; i < dashableList.length; i++)
 			out[i] = dashableList[i].toArray(DashableEntry[]::new);
 
-		return new StagedDataChunk<R, D>(pos, out, objectPos);
+		return new StagedDataChunk<R, D>(pos, dashType.getSimpleName(), out, objectPos);
 	}
 
 

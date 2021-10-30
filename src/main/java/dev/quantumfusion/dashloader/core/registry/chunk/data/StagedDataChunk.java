@@ -11,16 +11,30 @@ public class StagedDataChunk<R, D extends Dashable<R>> extends AbstractDataChunk
 	public final DashableEntry<D>[][] dashables;
 	public final int dashablesSize;
 
-	public StagedDataChunk(byte pos, DashableEntry<D>[][] dashables, int dashablesSize) {
-		super(pos);
+	public StagedDataChunk(byte pos, String name, DashableEntry<D>[][] dashables, int dashablesSize) {
+		super(pos, name);
 		this.dashables = dashables;
 		this.dashablesSize = dashablesSize;
+	}
+
+	@Override
+	public void prepare(DashRegistryReader reader) {
+		for (var stage : dashables)
+			for (var entry : stage)
+				entry.dashable().prepare(reader);
 	}
 
 	@Override
 	public void export(Object[] data, DashRegistryReader registry) {
 		for (DashableEntry<D>[] dashable : dashables)
 			DashThreading.export(dashable, data, registry);
+	}
+
+	@Override
+	public void apply(DashRegistryReader reader) {
+		for (var stage : dashables)
+			for (var entry : stage)
+				entry.dashable().apply(reader);
 	}
 
 	@Override

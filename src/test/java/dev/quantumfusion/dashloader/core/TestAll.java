@@ -2,6 +2,8 @@ package dev.quantumfusion.dashloader.core;
 
 import dev.quantumfusion.dashloader.core.objects.Identifier;
 import dev.quantumfusion.dashloader.core.objects.IdentifierDash;
+import dev.quantumfusion.dashloader.core.objects.holder.HoldingHoldingHoldingModel;
+import dev.quantumfusion.dashloader.core.objects.holder.HoldingHoldingHoldingModelDash;
 import dev.quantumfusion.dashloader.core.objects.model.*;
 import dev.quantumfusion.dashloader.core.registry.ChunkDataHolder;
 import dev.quantumfusion.dashloader.core.registry.DashRegistryReader;
@@ -25,14 +27,15 @@ public class TestAll {
 		data.fill();
 
 
-		System.out.println("Core init");
-		DashLoaderCore core = new DashLoaderCore(Path.of("./testing"), IdentifierDash.class, BakedModelDash.class, HoldingBakedModelDash.class, HoldingHoldingBakedModelDash.class);
-		System.out.println("Subcache");
+		DashLoaderCore core = new DashLoaderCore(Path.of("./testing"),
+												 IdentifierDash.class,
+												 BakedModelDash.class,
+												 HoldingBakedModelDash.class,
+												 HoldingHoldingBakedModelDash.class,
+												 HoldingHoldingHoldingModelDash.class);
 		core.setCurrentSubcache("main");
 
-		System.out.println("RegistryDataHolder serializer");
-		core.prepareSerializer(RegistryDataHolder.class, ModelDash.class, IdentifierDash.class);
-		System.out.println("RegistryMappings serializer");
+		core.prepareSerializer(RegistryDataHolder.class, HoldingHoldingHoldingModelDash.class, ModelDash.class, IdentifierDash.class);
 		core.prepareSerializer(RegistryMappings.class);
 
 		if (core.isCacheMissing()) {
@@ -46,12 +49,17 @@ public class TestAll {
 				registryMappings.models.add(writer.add(model));
 			}
 
+			for (var model : data.whatAmIDoingWithMyLife) {
+				registryMappings.extra.add(writer.add(model));
+			}
+
 
 			System.out.println("Exporting");
 			// export the chunks
+			var holder = writer.getChunk(HoldingHoldingHoldingModelDash.class).exportData();
 			var identifierData = writer.getChunk(IdentifierDash.class).exportData();
 			var modelData = writer.getChunk(ModelDash.class).exportData();
-			final RegistryDataHolder registryDataHolder = new RegistryDataHolder(identifierData, modelData);
+			final RegistryDataHolder registryDataHolder = new RegistryDataHolder(holder, identifierData, modelData);
 
 			System.out.println("Saving");
 			core.save(registryDataHolder);
@@ -74,36 +82,43 @@ public class TestAll {
 				dataOut.models.add(reader.get(model));
 			}
 
+			for (var model : registryMappings.extra) {
+				dataOut.whatAmIDoingWithMyLife.add(reader.get(model));
+			}
+
 			System.out.println(data.equals(dataOut));
 		}
 	}
 
 	@Data
 	public record RegistryDataHolder(
+			AbstractDataChunk<HoldingHoldingHoldingModel, HoldingHoldingHoldingModelDash> extra,
 			AbstractDataChunk<Identifier, IdentifierDash> identifierData,
 			AbstractDataChunk<Model, ModelDash> modelData) implements ChunkDataHolder {
 
 		@Override
 		public Collection<AbstractDataChunk<?, ?>> getChunks() {
-			return List.of(identifierData, modelData);
+			return List.of(identifierData, modelData, extra);
 		}
 	}
 
 	@Data
 	public static class RegistryMappings {
 		public List<Integer> models = new ArrayList<>();
+		public List<Integer> extra = new ArrayList<>();
 
 		public RegistryMappings() {
 		}
 
-		public RegistryMappings(List<Integer> models) {
+		public RegistryMappings(List<Integer> models, List<Integer> extra) {
 			this.models = models;
+			this.extra = extra;
 		}
 	}
 
 	public static class VanillaData {
-
 		public final List<HoldingHoldingBakedModel> models = new ArrayList<>();
+		public final List<HoldingHoldingHoldingModel> whatAmIDoingWithMyLife = new ArrayList<>();
 
 
 		public VanillaData() {
@@ -111,9 +126,12 @@ public class TestAll {
 
 		public void fill() {
 			final Identifier fsdadfd = new Identifier("fsdadfd");
-
-			for (int i = 0; i < 1000000; i++) {
+			for (int i = 0; i < 10; i++) {
 				models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(i % 200, fsdadfd, "fdfsafsd" + (i % 200)), i)));
+			}
+
+			for (int i = 0; i < 10; i++) {
+				whatAmIDoingWithMyLife.add(new HoldingHoldingHoldingModel(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(i % 230, fsdadfd, "fdfsafsd" + (i % 200)), i))));
 			}
 
 		}
