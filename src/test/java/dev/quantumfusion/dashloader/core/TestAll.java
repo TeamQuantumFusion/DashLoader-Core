@@ -126,11 +126,12 @@ public class TestAll {
 
 		public void fill() {
 			final Identifier fsdadfd = new Identifier("fsdadfd");
-			for (int i = 0; i < 10; i++) {
-				models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(i % 200, fsdadfd, "fdfsafsd" + (i % 200)), i)));
+			for (int i = 0; i < 10000; i++) {
+				final BakedModel basicModel = new BakedModel(i, new Identifier("fsdadfd" + i), "fdfsafsd" + (i % 200));
+				models.add(new HoldingHoldingBakedModel(new HoldingBakedModel(basicModel, i)));
 			}
 
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 10000; i++) {
 				whatAmIDoingWithMyLife.add(new HoldingHoldingHoldingModel(new HoldingHoldingBakedModel(new HoldingBakedModel(new BakedModel(i % 230, fsdadfd, "fdfsafsd" + (i % 200)), i))));
 			}
 

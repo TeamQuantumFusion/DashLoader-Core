@@ -5,6 +5,7 @@ import dev.quantumfusion.dashloader.core.api.DashConstructor;
 import dev.quantumfusion.dashloader.core.registry.DashRegistryWriter;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.StagedDataChunk;
+import dev.quantumfusion.dashloader.core.ui.DashLoaderProgress;
 import dev.quantumfusion.dashloader.core.util.DashableEntry;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
@@ -53,12 +54,16 @@ public class StagedChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, 
 	@Override
 	@SuppressWarnings("unchecked")
 	public AbstractDataChunk<R, D> exportData() {
+		var name = dashType.getSimpleName();
+		DashLoaderProgress.PROGRESS.setCurrentSubtask("Exporting " + name, dashableList.length);
 		var out = new DashableEntry[dashableList.length][];
 
-		for (int i = 0; i < dashableList.length; i++)
+		for (int i = 0; i < dashableList.length; i++) {
 			out[i] = dashableList[i].toArray(DashableEntry[]::new);
+			DashLoaderProgress.PROGRESS.completedSubTask();
+		}
 
-		return new StagedDataChunk<R, D>(pos, dashType.getSimpleName(), out, objectPos);
+		return new StagedDataChunk<R, D>(pos, name, out, objectPos);
 	}
 
 

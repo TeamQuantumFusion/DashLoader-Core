@@ -4,7 +4,6 @@ import dev.quantumfusion.dashloader.core.Dashable;
 import dev.quantumfusion.dashloader.core.api.DashConstructor;
 import dev.quantumfusion.dashloader.core.registry.DashRegistryWriter;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
-import dev.quantumfusion.dashloader.core.registry.chunk.data.DataChunk;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
 import java.util.ArrayList;
@@ -47,6 +46,6 @@ public class MultiChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, D
 
 	@Override
 	public AbstractDataChunk<R, D> exportData() {
-		return new DataChunk<>(pos, dashType.getSimpleName(), dashableList.toArray(Dashable[]::new));
+		return export(dashType, dashableList);
 	}
 }

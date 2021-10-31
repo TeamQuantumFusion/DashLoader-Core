@@ -1,11 +1,13 @@
-package dev.quantumfusion.dashloader.core.util;
+package dev.quantumfusion.dashloader.core.util.task;
 
 import dev.quantumfusion.dashloader.core.Dashable;
 import dev.quantumfusion.dashloader.core.registry.DashRegistryReader;
+import dev.quantumfusion.dashloader.core.util.DashThreading;
+import dev.quantumfusion.dashloader.core.util.DashableEntry;
 
 import java.util.concurrent.RecursiveAction;
 
-public class PositionedUndashTask<R, D extends Dashable<R>> extends RecursiveAction {
+public class PositionedExportTask<R, D extends Dashable<R>> extends RecursiveAction {
 	private final int threshold;
 	private final int start;
 	private final int stop;
@@ -13,7 +15,7 @@ public class PositionedUndashTask<R, D extends Dashable<R>> extends RecursiveAct
 	private final Object[] outArray;
 	private final DashRegistryReader registry;
 
-	public PositionedUndashTask(int threshold, int start, int stop, DashableEntry<D>[] dashArray, Object[] outArray, DashRegistryReader registry) {
+	public PositionedExportTask(int threshold, int start, int stop, DashableEntry<D>[] dashArray, Object[] outArray, DashRegistryReader registry) {
 		this.threshold = threshold;
 		this.start = start;
 		this.stop = stop;
@@ -22,7 +24,7 @@ public class PositionedUndashTask<R, D extends Dashable<R>> extends RecursiveAct
 		this.registry = registry;
 	}
 
-	public PositionedUndashTask(DashableEntry<D>[] dashArray, Object[] outArray, DashRegistryReader registry) {
+	public PositionedExportTask(DashableEntry<D>[] dashArray, Object[] outArray, DashRegistryReader registry) {
 		this.start = 0;
 		this.stop = dashArray.length;
 		this.threshold = Math.max(this.stop / DashThreading.CORES, 8);
@@ -37,9 +39,12 @@ public class PositionedUndashTask<R, D extends Dashable<R>> extends RecursiveAct
 		if (size < threshold) computeTask();
 		else {
 			final int middle = start + (size / 2);
-			final PositionedUndashTask<R, D> alpha = new PositionedUndashTask<>(threshold, start, middle, dashArray, outArray, registry);
-			final PositionedUndashTask<R, D> beta = new PositionedUndashTask<>(threshold, middle, stop, dashArray, outArray, registry);
-			invokeAll(alpha, beta);
+			final PositionedExportTask<R, D> alpha = new PositionedExportTask<>(threshold, start, middle, dashArray, outArray, registry);
+			final PositionedExportTask<R, D> beta = new PositionedExportTask<>(threshold, middle, stop, dashArray, outArray, registry);
+			alpha.fork();
+			beta.fork();
+			alpha.join();
+			beta.join();
 		}
 	}
 

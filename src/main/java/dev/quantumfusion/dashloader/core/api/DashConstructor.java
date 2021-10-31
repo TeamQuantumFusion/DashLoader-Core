@@ -33,13 +33,11 @@ public class DashConstructor<R, D extends Dashable<R>> {
 			final Class<?>[] parameters = mode.getParameters(rawClass);
 			try {
 				final MethodType type = MethodType.methodType(dashClass, parameters);
-				System.out.println(type);
 				return new DashConstructor<>(MethodHandles.publicLookup().findStatic(dashClass, "create", type), mode, dashClass);
 			} catch (NoSuchMethodException ignored) {
 			}
 			try {
 				final MethodType type = MethodType.methodType(void.class, parameters);
-				System.out.println(type);
 				return new DashConstructor<>(MethodHandles.publicLookup().findConstructor(dashClass, type), mode, dashClass);
 			} catch (NoSuchMethodException ignored) {
 			}

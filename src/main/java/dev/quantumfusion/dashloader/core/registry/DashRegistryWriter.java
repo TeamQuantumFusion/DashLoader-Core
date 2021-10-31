@@ -41,8 +41,21 @@ public class DashRegistryWriter {
 	@SuppressWarnings("unchecked")
 	public <R> int add(R object) {
 		if (dedup.containsKey(object)) return dedup.getInt(object);
-		final var targetClass = object.getClass();
-		final var chunk = (ChunkWriter<R, ?>) chunks[mappings.getByte(targetClass)];
+		var targetClass = object.getClass();
+		var chunk = (ChunkWriter<R, ?>) chunks[mappings.getByte(targetClass)];
+
+		if (chunk == null) {
+			for (Object2ByteMap.Entry<Class<?>> classEntry : mappings.object2ByteEntrySet()) {
+				if (classEntry.getKey().isAssignableFrom(targetClass)) {
+					chunk = (ChunkWriter<R, ?>) chunks[classEntry.getByteValue()];
+					break;
+				}
+			}
+		}
+
+		if (chunk == null)
+			throw new RuntimeException("Could not find a ChunkWriter for " + targetClass);
+
 		final var objectPos = chunk.add(object);
 		final int pointer = createPointer(objectPos, chunk.pos);
 		((Object2IntMap<R>) dedup).put(object, pointer);

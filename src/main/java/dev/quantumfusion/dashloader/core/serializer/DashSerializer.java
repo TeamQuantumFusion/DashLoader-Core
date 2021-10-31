@@ -73,7 +73,7 @@ public class DashSerializer<O> {
 
 	public void encode(O object, String subCache) throws IOException {
 		try (FileChannel channel = FileChannel.open(getFilePath(subCache), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
-			final ByteBufferIO wrap = ByteBufferIO.wrap(channel.map(FileChannel.MapMode.READ_WRITE, 0, serializer.measure(object)));
+			final var wrap = ByteBufferIO.wrap(channel.map(FileChannel.MapMode.READ_WRITE, 0, serializer.measure(object)));
 			serializer.put(wrap, object);
 		}
 	}

@@ -4,8 +4,11 @@ import dev.quantumfusion.dashloader.core.Dashable;
 import dev.quantumfusion.dashloader.core.registry.DashRegistryWriter;
 import dev.quantumfusion.dashloader.core.registry.chunk.AbstractChunk;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
+import dev.quantumfusion.dashloader.core.registry.chunk.data.DataChunk;
+import dev.quantumfusion.dashloader.core.ui.DashLoaderProgress;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Holds and handles the target objects
@@ -27,4 +30,15 @@ public abstract class ChunkWriter<R, D extends Dashable<R>> extends AbstractChun
 
 	public abstract AbstractDataChunk<R, D> exportData();
 
+
+	protected DataChunk<R, D> export(Class<?> type, List<D> list) {
+		final String name = type.getSimpleName();
+		DashLoaderProgress.PROGRESS.setCurrentSubtask("Exporting " + name, list.size());
+		D[] out = (D[]) new Dashable[list.size()];
+		for (int i = 0; i < list.size(); i++) {
+			out[i] = list.get(i);
+			DashLoaderProgress.PROGRESS.completedSubTask();
+		}
+		return new DataChunk<>(pos, name, out);
+	}
 }

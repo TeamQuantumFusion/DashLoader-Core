@@ -1,7 +1,12 @@
 package dev.quantumfusion.dashloader.core.util;
 
 import dev.quantumfusion.dashloader.core.Dashable;
+import dev.quantumfusion.dashloader.core.api.DashConstructor;
 import dev.quantumfusion.dashloader.core.registry.DashRegistryReader;
+import dev.quantumfusion.dashloader.core.registry.DashRegistryWriter;
+import dev.quantumfusion.dashloader.core.util.task.ExportTask;
+import dev.quantumfusion.dashloader.core.util.task.PositionedExportTask;
+import dev.quantumfusion.dashloader.core.util.task.WriteTask;
 
 import java.util.Collection;
 import java.util.List;
@@ -41,12 +46,17 @@ public class DashThreading {
 
 	public static <R, D extends Dashable<R>> void export(D[] dashables, Object[] data, DashRegistryReader registry) {
 		ensurePoolAlive();
-		THREAD_POOL.invoke(new UndashTask<>(dashables, data, registry));
+		THREAD_POOL.invoke(new ExportTask<>(dashables, data, registry));
+	}
+
+	public static <R, D extends Dashable<R>> void writeTask(String name, D[] outDashables, Object[] inData, DashConstructor<R, D> constructor, DashRegistryWriter registry) {
+		ensurePoolAlive();
+		THREAD_POOL.invoke(new WriteTask<>(name, outDashables, inData, constructor, registry));
 	}
 
 	public static <R, D extends Dashable<R>> void export(DashableEntry<D>[] dashables, Object[] data, DashRegistryReader registry) {
 		ensurePoolAlive();
-		THREAD_POOL.invoke(new PositionedUndashTask<>(dashables, data, registry));
+		THREAD_POOL.invoke(new PositionedExportTask<>(dashables, data, registry));
 	}
 
 

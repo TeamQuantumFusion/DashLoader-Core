@@ -4,10 +4,7 @@ import dev.quantumfusion.dashloader.core.DashObjectMetadata;
 import dev.quantumfusion.dashloader.core.Dashable;
 import dev.quantumfusion.dashloader.core.api.DashConstructor;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
-import dev.quantumfusion.dashloader.core.registry.chunk.write.ChunkWriter;
-import dev.quantumfusion.dashloader.core.registry.chunk.write.MultiChunkWriter;
-import dev.quantumfusion.dashloader.core.registry.chunk.write.SoloChunkWriter;
-import dev.quantumfusion.dashloader.core.registry.chunk.write.StagedChunkWriter;
+import dev.quantumfusion.dashloader.core.registry.chunk.write.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,19 +46,6 @@ public class DashRegistryBuilder {
 		}
 
 		infos.sort(Comparator.comparingInt(value -> value.priority));
-		for (int i = 0; i < infos.size(); i++) {
-			ChunkInfo<?, ? extends Dashable<?>> info = infos.get(i);
-			StringJoiner joiner = new StringJoiner(", ");
-			for (DashObjectMetadata<?, ? extends Dashable<?>> dashObject : info.dashObjects) {
-				StringJoiner joiner2 = new StringJoiner(", ", "(", ")");
-				for (Class<Dashable<?>> dependency : dashObject.dependencies) {
-					joiner2.add(dependency.getSimpleName());
-				}
-				joiner.add(dashObject.dashClass.getSimpleName() + joiner2);
-			}
-			System.out.println(i + " > " + info.dashType.getSimpleName() + " | " + joiner);
-		}
-
 		return createDashRegistry(infos);
 	}
 
@@ -178,7 +162,10 @@ public class DashRegistryBuilder {
 		public ChunkWriter<R, D> compile(DashRegistryWriter writer, byte pos) {
 			if (dashObjects.size() == 1) {
 				var meta = (DashObjectMetadata<R, D>) dashObjects.get(0);
-				return new SoloChunkWriter<>(pos, writer, meta.targetClass, DashConstructor.create(meta.dashClass, meta.targetClass), dashType);
+				if (meta.dependencies.length == 0)
+					return new ThreadedChunkWriter<>(pos, writer, meta.targetClass, DashConstructor.create(meta.dashClass, meta.targetClass), dashType);
+				else
+					return new SoloChunkWriter<>(pos, writer, meta.targetClass, DashConstructor.create(meta.dashClass, meta.targetClass), dashType);
 			}
 
 			if (anyInternalReferences()) {
