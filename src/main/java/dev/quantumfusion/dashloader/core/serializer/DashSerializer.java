@@ -35,6 +35,7 @@ public class DashSerializer<O> {
 	@SafeVarargs
 	public static <O> DashSerializer<O> create(Path cacheFolder, Class<O> holderClass, List<DashObjectMetadata<?, ?>> dashObjects, Class<? extends Dashable>... dashables) {
 		var serializerFileLocation = cacheFolder.resolve(holderClass.getSimpleName().toLowerCase() + ".dlc");
+		prepareFile(serializerFileLocation);
 		if (Files.exists(serializerFileLocation)) {
 			var classDefiner = new ClassDefiner(Thread.currentThread().getContextClassLoader());
 			try {
@@ -71,21 +72,33 @@ public class DashSerializer<O> {
 		return holderClass.getSimpleName().toLowerCase() + "-serializer";
 	}
 
-	public void encode(O object, String subCache) throws IOException {
-		try (FileChannel channel = FileChannel.open(getFilePath(subCache), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
-			final var wrap = ByteBufferIO.wrap(channel.map(FileChannel.MapMode.READ_WRITE, 0, serializer.measure(object)));
-			serializer.put(wrap, object);
+	private static void prepareFile(Path path) {
+		try {
+			Files.createDirectories(path.getParent());
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
-	public O decode(String subCache) throws IOException {
-		try (FileChannel channel = FileChannel.open(getFilePath(subCache))) {
-			return serializer.get(ByteBufferIO.wrap(channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size())));
+	public void encode(O object, String subCache) throws IOException {
+		final Path filePath = getFilePath(subCache);
+		prepareFile(filePath);
+		try (FileChannel channel = FileChannel.open(filePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
+			final var wrap = ByteBufferIO.wrap(channel.map(FileChannel.MapMode.READ_WRITE, 0, serializer.measure(object)));
+			serializer.put(wrap, object);
 		}
 	}
 
 	@NotNull
 	private Path getFilePath(String subCache) {
 		return cacheFolder.resolve(subCache + "/" + dataClass.getSimpleName().toLowerCase(Locale.ROOT) + ".dld");
+	}
+
+	public O decode(String subCache) throws IOException {
+		final Path filePath = getFilePath(subCache);
+		prepareFile(filePath);
+		try (FileChannel channel = FileChannel.open(filePath)) {
+			return serializer.get(ByteBufferIO.wrap(channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size())));
+		}
 	}
 }

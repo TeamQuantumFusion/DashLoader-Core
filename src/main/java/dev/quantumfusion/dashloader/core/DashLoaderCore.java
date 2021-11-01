@@ -42,12 +42,6 @@ public class DashLoaderCore {
 	public void setCurrentSubcache(String name) {
 		this.cacheAvailable = Files.exists(cacheFolder.resolve(name + "/"));
 		this.currentSubCache = name;
-
-		if (!this.cacheAvailable) {
-			try {
-				Files.createDirectory(cacheFolder.resolve(name + "/"));
-			} catch (IOException ignored) {}
-		}
 	}
 
 	public boolean isCacheMissing() {
