@@ -59,5 +59,9 @@ public class DashThreading {
 		THREAD_POOL.invoke(new PositionedExportTask<>(dashables, data, registry));
 	}
 
+	public static int calcThreshold(final int tasks) {
+		return Math.max(tasks / (DashThreading.CORES * 16), 4);
+	}
+
 
 }

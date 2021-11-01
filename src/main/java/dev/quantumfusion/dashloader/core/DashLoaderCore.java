@@ -1,9 +1,6 @@
 package dev.quantumfusion.dashloader.core;
 
-import dev.quantumfusion.dashloader.core.registry.ChunkDataHolder;
-import dev.quantumfusion.dashloader.core.registry.DashRegistryBuilder;
-import dev.quantumfusion.dashloader.core.registry.DashRegistryReader;
-import dev.quantumfusion.dashloader.core.registry.DashRegistryWriter;
+import dev.quantumfusion.dashloader.core.registry.*;
 import dev.quantumfusion.dashloader.core.serializer.DashSerializer;
 import dev.quantumfusion.dashloader.core.util.DashThreading;
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +12,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class DashLoaderCore {
+	public static Consumer<String> PRINT = System.out::println;
 	private final Map<Class<?>, DashSerializer<?>> serializers = new HashMap<>();
 	private final List<DashObjectMetadata<?, ?>> dashObjects;
 	private final Path cacheFolder;
@@ -55,8 +54,8 @@ public class DashLoaderCore {
 		return !cacheAvailable;
 	}
 
-	public DashRegistryWriter createWriter() {
-		return DashRegistryBuilder.createWriter(dashObjects);
+	public DashRegistryWriter createWriter(Map<Class<?>, WriteFailCallback<?, ?>> callbacks) {
+		return DashRegistryBuilder.createWriter(dashObjects, callbacks);
 	}
 
 	public DashRegistryReader createReader(ChunkDataHolder... holders) {

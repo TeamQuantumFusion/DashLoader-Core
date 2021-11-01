@@ -5,9 +5,10 @@ import dev.quantumfusion.dashloader.core.registry.DashRegistryReader;
 import dev.quantumfusion.dashloader.core.util.DashThreading;
 import dev.quantumfusion.dashloader.core.util.DashableEntry;
 
-import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.ForkJoinTask;
 
-public class PositionedExportTask<R, D extends Dashable<R>> extends RecursiveAction {
+@SuppressWarnings({"FinalMethodInFinalClass"})
+public final class PositionedExportTask<R, D extends Dashable<R>> extends ForkJoinTask<Void> {
 	private final int threshold;
 	private final int start;
 	private final int stop;
@@ -15,7 +16,7 @@ public class PositionedExportTask<R, D extends Dashable<R>> extends RecursiveAct
 	private final Object[] outArray;
 	private final DashRegistryReader registry;
 
-	public PositionedExportTask(int threshold, int start, int stop, DashableEntry<D>[] dashArray, Object[] outArray, DashRegistryReader registry) {
+	private PositionedExportTask(int threshold, int start, int stop, DashableEntry<D>[] dashArray, Object[] outArray, DashRegistryReader registry) {
 		this.threshold = threshold;
 		this.start = start;
 		this.stop = stop;
@@ -27,31 +28,32 @@ public class PositionedExportTask<R, D extends Dashable<R>> extends RecursiveAct
 	public PositionedExportTask(DashableEntry<D>[] dashArray, Object[] outArray, DashRegistryReader registry) {
 		this.start = 0;
 		this.stop = dashArray.length;
-		this.threshold = Math.max(this.stop / DashThreading.CORES, 8);
+		this.threshold = DashThreading.calcThreshold(stop);
 		this.dashArray = dashArray;
 		this.outArray = outArray;
 		this.registry = registry;
 	}
 
 	@Override
-	protected void compute() {
+	protected final boolean exec() {
 		final int size = stop - start;
-		if (size < threshold) computeTask();
+		if (size < threshold)
+			for (int i = start; i < stop; i++) {
+				final var entry = dashArray[i];
+				outArray[entry.pos()] = entry.dashable().export(registry);
+			}
 		else {
 			final int middle = start + (size / 2);
-			final PositionedExportTask<R, D> alpha = new PositionedExportTask<>(threshold, start, middle, dashArray, outArray, registry);
-			final PositionedExportTask<R, D> beta = new PositionedExportTask<>(threshold, middle, stop, dashArray, outArray, registry);
-			alpha.fork();
-			beta.fork();
-			alpha.join();
-			beta.join();
+			invokeAll(new PositionedExportTask<>(threshold, start, middle, dashArray, outArray, registry),
+					  new PositionedExportTask<>(threshold, middle, stop, dashArray, outArray, registry));
 		}
+		return true;
 	}
 
-	private void computeTask() {
-		for (int i = start; i < stop; i++) {
-			final DashableEntry<D> entry = dashArray[i];
-			outArray[entry.pos()] = entry.dashable().export(registry);
-		}
+	public final Void getRawResult() {
+		return null;
+	}
+
+	protected final void setRawResult(Void mustBeNull) {
 	}
 }

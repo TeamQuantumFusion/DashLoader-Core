@@ -1,5 +1,6 @@
 package dev.quantumfusion.dashloader.core.registry;
 
+import dev.quantumfusion.dashloader.core.DashLoaderCore;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
 
 @SuppressWarnings("FinalMethodInFinalClass")
@@ -23,7 +24,7 @@ public final class DashRegistryReader {
 			final int size = chunk.getSize();
 			var dataObjects = new Object[size];
 			data[i] = dataObjects;
-			System.out.println("Loading " + size + " " + chunk.name + "s");
+			DashLoaderCore.PRINT.accept("Loading " + size + " " + chunk.name + "s");
 			chunk.prepare(this);
 			chunk.export(dataObjects, this);
 			chunk.apply(this);

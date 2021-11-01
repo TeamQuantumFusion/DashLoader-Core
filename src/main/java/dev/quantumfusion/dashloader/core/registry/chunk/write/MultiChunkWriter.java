@@ -3,6 +3,7 @@ package dev.quantumfusion.dashloader.core.registry.chunk.write;
 import dev.quantumfusion.dashloader.core.Dashable;
 import dev.quantumfusion.dashloader.core.api.DashConstructor;
 import dev.quantumfusion.dashloader.core.registry.DashRegistryWriter;
+import dev.quantumfusion.dashloader.core.registry.WriteFailCallback;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 
@@ -16,11 +17,13 @@ public class MultiChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, D
 	private final Class<?> dashType;
 
 	private final List<D> dashableList = new ArrayList<>();
+	private final WriteFailCallback<R, D> callback;
 
-	public MultiChunkWriter(byte pos, DashRegistryWriter registry, Object2ObjectMap<Class<?>, DashConstructor<R, D>> mappings, Class<?> dashType) {
+	public MultiChunkWriter(byte pos, DashRegistryWriter registry, Object2ObjectMap<Class<?>, DashConstructor<R, D>> mappings, Class<?> dashType, WriteFailCallback<R, D> callback) {
 		super(pos, registry);
 		this.mappings = mappings;
 		this.dashType = dashType;
+		this.callback = callback;
 	}
 
 	@Override
@@ -28,9 +31,8 @@ public class MultiChunkWriter<R, D extends Dashable<R>> extends ChunkWriter<R, D
 		final int pos = dashableList.size();
 		final DashConstructor<R, D> rdDashConstructor = mappings.get(object.getClass());
 		if (rdDashConstructor == null)
-			throw new RuntimeException("Cannot find a constructor for " + object.getClass());
-
-		dashableList.add(rdDashConstructor.invoke(object, registry));
+			dashableList.add(callback.fail(object, registry));
+		else dashableList.add(rdDashConstructor.invoke(object, registry));
 		return pos;
 	}
 

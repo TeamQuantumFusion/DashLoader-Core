@@ -12,10 +12,7 @@ import dev.quantumfusion.hyphen.scan.annotations.Data;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class TestAll {
 
@@ -40,7 +37,7 @@ public class TestAll {
 
 		if (core.isCacheMissing()) {
 			System.out.println("Creating Writer");
-			var writer = core.createWriter();
+			var writer = core.createWriter(Map.of());
 
 			System.out.println("Writing");
 			// our registryMappings

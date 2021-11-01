@@ -16,9 +16,6 @@ class DashThreadPool extends ForkJoinPool {
 				dashThread.setName("dlc-thread-" + threadNumber.getAndIncrement());
 				return dashThread;
 			}
-		}, (t, e) -> {
-			System.out.println(t.getName() + " failed, ERROR: " + e.getMessage());
-			e.printStackTrace();
-		}, true);
+		}, null, true);
 	}
 }

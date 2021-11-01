@@ -8,7 +8,8 @@ import dev.quantumfusion.dashloader.core.util.DashThreading;
 
 import java.util.concurrent.RecursiveAction;
 
-public class WriteTask<R, D extends Dashable<R>> extends RecursiveAction {
+@SuppressWarnings({"FinalMethodInFinalClass", "FinalPrivateMethod"})
+public final class WriteTask<R, D extends Dashable<R>> extends RecursiveAction {
 	private final int threshold;
 	private final int start;
 	private final int stop;
@@ -17,7 +18,7 @@ public class WriteTask<R, D extends Dashable<R>> extends RecursiveAction {
 	private final DashConstructor<R, D> constructor;
 	private final DashRegistryWriter registry;
 
-	public WriteTask(int threshold, int start, int stop, D[] outArray, Object[] inArray, DashConstructor<R, D> constructor, DashRegistryWriter registry) {
+	private WriteTask(int threshold, int start, int stop, D[] outArray, Object[] inArray, DashConstructor<R, D> constructor, DashRegistryWriter registry) {
 		this.threshold = threshold;
 		this.start = start;
 		this.stop = stop;
@@ -31,7 +32,7 @@ public class WriteTask<R, D extends Dashable<R>> extends RecursiveAction {
 		DashLoaderProgress.PROGRESS.setCurrentSubtask(name, inArray.length);
 		this.start = 0;
 		this.stop = outArray.length;
-		this.threshold = Math.max(this.stop / DashThreading.CORES, 8);
+		this.threshold = DashThreading.calcThreshold(stop);
 		this.outArray = outArray;
 		this.inArray = inArray;
 		this.constructor = constructor;
@@ -39,21 +40,17 @@ public class WriteTask<R, D extends Dashable<R>> extends RecursiveAction {
 	}
 
 	@Override
-	protected void compute() {
+	protected final void compute() {
 		final int size = stop - start;
 		if (size < threshold) computeTask();
 		else {
 			final int middle = start + (size / 2);
-			final WriteTask<R, D> alpha = new WriteTask<>(threshold, start, middle, outArray, inArray, constructor, registry);
-			final WriteTask<R, D> beta = new WriteTask<>(threshold, middle, stop, outArray, inArray, constructor, registry);
-			alpha.fork();
-			beta.fork();
-			alpha.join();
-			beta.join();
+			invokeAll(new WriteTask<>(threshold, start, middle, outArray, inArray, constructor, registry),
+					  new WriteTask<>(threshold, middle, stop, outArray, inArray, constructor, registry));
 		}
 	}
 
-	private void computeTask() {
+	private final void computeTask() {
 		for (int i = start; i < stop; i++) {
 			outArray[i] = constructor.invoke((R) inArray[i], registry);
 			DashLoaderProgress.PROGRESS.completedSubTask();

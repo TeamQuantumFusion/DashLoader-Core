@@ -23,7 +23,7 @@ public class DashRegistryBuilder {
 		return new DashRegistryReader(out);
 	}
 
-	public static DashRegistryWriter createWriter(List<DashObjectMetadata<?, ? extends Dashable<?>>> classEntries) {
+	public static DashRegistryWriter createWriter(List<DashObjectMetadata<?, ? extends Dashable<?>>> classEntries, Map<Class<?>, WriteFailCallback<?, ?>> callbacks) {
 		var typeMappings = new LinkedHashMap<Class<?>, List<Class<? extends Dashable<?>>>>();
 		classEntries.forEach(d -> typeMappings.computeIfAbsent(d.dashType, aClass -> new ArrayList<>()).add(d.dashClass));
 
@@ -46,18 +46,18 @@ public class DashRegistryBuilder {
 		}
 
 		infos.sort(Comparator.comparingInt(value -> value.priority));
-		return createDashRegistry(infos);
+		return createDashRegistry(infos, callbacks);
 	}
 
 	@NotNull
-	private static DashRegistryWriter createDashRegistry(List<ChunkInfo<?, ? extends Dashable<?>>> infos) {
+	private static DashRegistryWriter createDashRegistry(List<ChunkInfo<?, ? extends Dashable<?>>> infos, Map<Class<?>, WriteFailCallback<?, ?>> callbacks) {
 		ChunkWriter<?, ?>[] chunks = new ChunkWriter[infos.size()];
 		DashRegistryWriter writer = new DashRegistryWriter(chunks);
 
 		for (int i = 0; i < infos.size(); i++) {
 			ChunkInfo<?, ? extends Dashable<?>> dashObjectHolder = infos.get(i);
-			chunks[i] = dashObjectHolder.compile(writer, (byte) i);
-			writer.addDashTypeMapping(dashObjectHolder.dashType, (byte) i);
+			chunks[i] = dashObjectHolder.compile(writer, (byte) i, callbacks);
+			writer.addChunkMapping(dashObjectHolder.dashType, (byte) i);
 		}
 
 		writer.compileMappings();
@@ -159,7 +159,8 @@ public class DashRegistryBuilder {
 			return false;
 		}
 
-		public ChunkWriter<R, D> compile(DashRegistryWriter writer, byte pos) {
+		@SuppressWarnings("unchecked")
+		public ChunkWriter<R, D> compile(DashRegistryWriter writer, byte pos, Map<Class<?>, WriteFailCallback<?, ?>> callbacks) {
 			if (dashObjects.size() == 1) {
 				var meta = (DashObjectMetadata<R, D>) dashObjects.get(0);
 				if (meta.dependencies.length == 0)
@@ -168,19 +169,24 @@ public class DashRegistryBuilder {
 					return new SoloChunkWriter<>(pos, writer, meta.targetClass, DashConstructor.create(meta.dashClass, meta.targetClass), dashType);
 			}
 
+
+			var callback = (WriteFailCallback<R, D>) callbacks.getOrDefault(dashType, (WriteFailCallback<R, D>) (craw, cwriter) -> {
+				throw new RuntimeException("Cannot write " + craw.getClass().getSimpleName() + " in a " + dashType.getSimpleName() + " writer");
+			});
+
 			if (anyInternalReferences()) {
 				var map = new Object2ObjectOpenHashMap<Class<?>, StagedChunkWriter.StageInfo<R, D>>();
 				for (int stage = 0; stage < dashObjects.size(); stage++) {
 					var meta = dashObjects.get(stage);
 					map.put(meta.targetClass, new StagedChunkWriter.StageInfo<>(DashConstructor.create(meta.dashClass, meta.targetClass), stage));
 				}
-				return new StagedChunkWriter<>(pos, writer, dashObjects.size(), map, dashType);
+				return new StagedChunkWriter<>(pos, writer, dashObjects.size(), map, callback, dashType);
 			} else {
 				var map = new Object2ObjectOpenHashMap<Class<?>, DashConstructor<R, D>>();
 				for (var dashObject : dashObjects)
 					map.put(dashObject.targetClass, DashConstructor.create(dashObject.dashClass, dashObject.targetClass));
 
-				return new MultiChunkWriter<>(pos, writer, map, dashType);
+				return new MultiChunkWriter<>(pos, writer, map, dashType, callback);
 			}
 
 		}
