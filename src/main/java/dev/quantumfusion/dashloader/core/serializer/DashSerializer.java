@@ -8,7 +8,7 @@ import dev.quantumfusion.dashloader.core.registry.chunk.data.StagedDataChunk;
 import dev.quantumfusion.hyphen.ClassDefiner;
 import dev.quantumfusion.hyphen.HyphenSerializer;
 import dev.quantumfusion.hyphen.SerializerFactory;
-import dev.quantumfusion.hyphen.io.ByteBufferIO;
+import dev.quantumfusion.hyphen.io.UnsafeIO;
 import dev.quantumfusion.hyphen.scan.annotations.DataSubclasses;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,9 +24,9 @@ import java.util.Locale;
 public class DashSerializer<O> {
 	private final Class<O> dataClass;
 	private final Path cacheFolder;
-	private final HyphenSerializer<ByteBufferIO, O> serializer;
+	private final HyphenSerializer<UnsafeIO, O> serializer;
 
-	public DashSerializer(Class<O> dataClass, Path cacheFolder, HyphenSerializer<ByteBufferIO, O> serializer) {
+	public DashSerializer(Class<O> dataClass, Path cacheFolder, HyphenSerializer<UnsafeIO, O> serializer) {
 		this.dataClass = dataClass;
 		this.cacheFolder = cacheFolder;
 		this.serializer = serializer;
@@ -40,7 +40,7 @@ public class DashSerializer<O> {
 			var classDefiner = new ClassDefiner(Thread.currentThread().getContextClassLoader());
 			try {
 				classDefiner.def(getSerializerName(holderClass), Files.readAllBytes(serializerFileLocation));
-				return new DashSerializer<>(holderClass, cacheFolder, (HyphenSerializer<ByteBufferIO, O>) ClassDefiner.SERIALIZER);
+				return new DashSerializer<>(holderClass, cacheFolder, (HyphenSerializer<UnsafeIO, O>) ClassDefiner.SERIALIZER);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -50,7 +50,7 @@ public class DashSerializer<O> {
 			Files.createFile(serializerFileLocation);
 		} catch (IOException ignored) {}
 
-		var factory = SerializerFactory.createDebug(ByteBufferIO.class, holderClass);
+		var factory = SerializerFactory.createDebug(UnsafeIO.class, holderClass);
 		factory.addGlobalAnnotation(AbstractDataChunk.class, DataSubclasses.class, new Class[]{DataChunk.class, StagedDataChunk.class});
 		factory.setClassName(getSerializerName(holderClass));
 		factory.setExportPath(serializerFileLocation);
@@ -84,7 +84,7 @@ public class DashSerializer<O> {
 		final Path filePath = getFilePath(subCache);
 		prepareFile(filePath);
 		try (FileChannel channel = FileChannel.open(filePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
-			final var wrap = ByteBufferIO.wrap(channel.map(FileChannel.MapMode.READ_WRITE, 0, serializer.measure(object)));
+			final var wrap = UnsafeIO.wrap(channel.map(FileChannel.MapMode.READ_WRITE, 0, serializer.measure(object)));
 			serializer.put(wrap, object);
 		}
 	}
@@ -98,7 +98,7 @@ public class DashSerializer<O> {
 		final Path filePath = getFilePath(subCache);
 		prepareFile(filePath);
 		try (FileChannel channel = FileChannel.open(filePath)) {
-			return serializer.get(ByteBufferIO.wrap(channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size())));
+			return serializer.get(UnsafeIO.wrap(channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size())));
 		}
 	}
 }
