@@ -2,10 +2,9 @@ package dev.quantumfusion.dashloader.core.registry;
 
 import dev.quantumfusion.dashloader.core.DashObjectMetadata;
 import dev.quantumfusion.dashloader.core.Dashable;
-import dev.quantumfusion.dashloader.core.api.DashConstructor;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
-import dev.quantumfusion.dashloader.core.registry.chunk.write.*;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import dev.quantumfusion.dashloader.core.registry.chunk.write.AbstractChunkWriter;
+import dev.quantumfusion.dashloader.core.registry.chunk.write.impl.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -51,7 +50,7 @@ public class DashRegistryBuilder {
 
 	@NotNull
 	private static DashRegistryWriter createDashRegistry(List<ChunkInfo<?, ? extends Dashable<?>>> infos, Map<Class<?>, WriteFailCallback<?, ?>> callbacks) {
-		ChunkWriter<?, ?>[] chunks = new ChunkWriter[infos.size()];
+		AbstractChunkWriter<?, ?>[] chunks = new AbstractChunkWriter[infos.size()];
 		DashRegistryWriter writer = new DashRegistryWriter(chunks);
 
 		for (int i = 0; i < infos.size(); i++) {
@@ -133,25 +132,25 @@ public class DashRegistryBuilder {
 	}
 
 	public static class ChunkInfo<R, D extends Dashable<R>> {
-		private final Class<?> dashType;
-		private final List<DashObjectMetadata<R, D>> dashObjects = new ArrayList<>();
+		public final Class<?> dashType;
+		public final List<DashObjectMetadata<R, D>> dashMetas = new ArrayList<>();
 		private int priority = Integer.MIN_VALUE;
 
-		public ChunkInfo(Class<?> dashType, ReferenceType<DashObjectHolder<R, D>>[] dashObjects) {
+		public ChunkInfo(Class<?> dashType, ReferenceType<DashObjectHolder<R, D>>[] dashMetas) {
 			this.dashType = dashType;
-			for (int i = 0; i < dashObjects.length; i++) {
-				final ReferenceType<DashObjectHolder<R, D>> dashObject = dashObjects[i];
+			for (int i = 0; i < dashMetas.length; i++) {
+				final ReferenceType<DashObjectHolder<R, D>> dashObject = dashMetas[i];
 				if (dashObject.object.metadata.dashType == dashType) {
-					this.dashObjects.add(dashObject.object.metadata);
+					this.dashMetas.add(dashObject.object.metadata);
 					this.priority = i;
 				}
 			}
 		}
 
 		public boolean anyInternalReferences() {
-			for (var dashObject : dashObjects) {
+			for (var dashObject : dashMetas) {
 				for (var dependency : dashObject.dependencies) {
-					for (var object : dashObjects) {
+					for (var object : dashMetas) {
 						if (dependency == object.dashClass) return true;
 					}
 				}
@@ -160,33 +159,23 @@ public class DashRegistryBuilder {
 		}
 
 		@SuppressWarnings("unchecked")
-		public ChunkWriter<R, D> compile(DashRegistryWriter writer, byte pos, Map<Class<?>, WriteFailCallback<?, ?>> callbacks) {
-			if (dashObjects.size() == 1) {
-				var meta = (DashObjectMetadata<R, D>) dashObjects.get(0);
-				if (meta.dependencies.length == 0)
-					return new ThreadedChunkWriter<>(pos, writer, meta.targetClass, DashConstructor.create(meta.dashClass, meta.targetClass), dashType);
-				else
-					return new SoloChunkWriter<>(pos, writer, meta.targetClass, DashConstructor.create(meta.dashClass, meta.targetClass), dashType);
-			}
-
-
+		public AbstractChunkWriter<R, D> compile(DashRegistryWriter writer, byte pos, Map<Class<?>, WriteFailCallback<?, ?>> callbacks) {
+			var floating = dashMetas.stream().allMatch(metadata -> metadata.dependencies.length == 0);
 			var callback = (WriteFailCallback<R, D>) callbacks.getOrDefault(dashType, (WriteFailCallback<R, D>) (craw, cwriter) -> {
 				throw new RuntimeException("Cannot write " + craw.getClass().getSimpleName() + " in a " + dashType.getSimpleName() + " writer");
 			});
 
-			if (anyInternalReferences()) {
-				var map = new Object2ObjectOpenHashMap<Class<?>, StagedChunkWriter.StageInfo<R, D>>();
-				for (int stage = 0; stage < dashObjects.size(); stage++) {
-					var meta = dashObjects.get(stage);
-					map.put(meta.targetClass, new StagedChunkWriter.StageInfo<>(DashConstructor.create(meta.dashClass, meta.targetClass), stage));
-				}
-				return new StagedChunkWriter<>(pos, writer, dashObjects.size(), map, callback, dashType);
-			} else {
-				var map = new Object2ObjectOpenHashMap<Class<?>, DashConstructor<R, D>>();
-				for (var dashObject : dashObjects)
-					map.put(dashObject.targetClass, DashConstructor.create(dashObject.dashClass, dashObject.targetClass));
+			if (dashMetas.size() == 1) {
+				var meta = (DashObjectMetadata<R, D>) dashMetas.get(0);
+				if (floating) return FloatingSingleChunkWriter.create(pos, writer, callback, meta);
+				else return SingleChunkWriter.create(pos, writer, callback, meta);
+			}
 
-				return new MultiChunkWriter<>(pos, writer, map, dashType, callback);
+			if (anyInternalReferences()) {
+				return StagedMultiChunkWriter.create(pos, writer, callback, dashMetas, dashType);
+			} else {
+				if (floating) return FloatingMultiChunkWriter.create(pos, writer, callback, dashMetas, dashType);
+				else return MultiChunkWriter.create(pos, writer, callback, dashMetas, dashType);
 			}
 
 		}

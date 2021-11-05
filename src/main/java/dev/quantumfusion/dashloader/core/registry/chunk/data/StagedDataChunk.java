@@ -9,36 +9,28 @@ import dev.quantumfusion.hyphen.scan.annotations.Data;
 @Data
 public class StagedDataChunk<R, D extends Dashable<R>> extends AbstractDataChunk<R, D> {
 	public final DashableEntry<D>[][] dashables;
-	public final DashableEntry<D>[] failed;
+
 	public final int dashablesSize;
 
-	public StagedDataChunk(byte pos, String name, DashableEntry<D>[][] dashables, DashableEntry<D>[] failed, int dashablesSize) {
+	public StagedDataChunk(byte pos, String name, DashableEntry<D>[][] dashables, int dashablesSize) {
 		super(pos, name);
 		this.dashables = dashables;
-		this.failed = failed;
 		this.dashablesSize = dashablesSize;
 	}
 
 	@Override
 	public void prepare(DashRegistryReader reader) {
-		for (var stage : dashables)
-			for (var entry : stage) entry.dashable().prepare(reader);
-		for (var entry : failed) entry.dashable().prepare(reader);
+		for (var stage : dashables) for (var entry : stage) entry.dashable().prepare(reader);
 	}
 
 	@Override
 	public void export(Object[] data, DashRegistryReader registry) {
-		for (DashableEntry<D>[] dashable : dashables)
-			DashThreading.export(dashable, data, registry);
-		DashThreading.export(failed, data, registry);
-
+		for (DashableEntry<D>[] dashable : dashables) DashThreading.runExport(dashable, data, registry);
 	}
 
 	@Override
 	public void apply(DashRegistryReader reader) {
-		for (var stage : dashables)
-			for (var entry : stage) entry.dashable().apply(reader);
-		for (var entry : failed) entry.dashable().apply(reader);
+		for (var stage : dashables) for (var entry : stage) entry.dashable().apply(reader);
 	}
 
 	@Override

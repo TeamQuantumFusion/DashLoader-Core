@@ -21,7 +21,7 @@ public class DataChunk<R, D extends Dashable<R>> extends AbstractDataChunk<R, D>
 
 	@Override
 	public void export(Object[] data, DashRegistryReader registry) {
-		DashThreading.export(dashables, data, registry);
+		DashThreading.runExport(dashables, data, registry);
 	}
 
 	@Override

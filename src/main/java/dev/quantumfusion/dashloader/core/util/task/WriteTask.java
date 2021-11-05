@@ -1,7 +1,7 @@
 package dev.quantumfusion.dashloader.core.util.task;
 
 import dev.quantumfusion.dashloader.core.Dashable;
-import dev.quantumfusion.dashloader.core.api.DashConstructor;
+import dev.quantumfusion.dashloader.core.api.Creator;
 import dev.quantumfusion.dashloader.core.registry.DashRegistryWriter;
 import dev.quantumfusion.dashloader.core.ui.DashLoaderProgress;
 import dev.quantumfusion.dashloader.core.util.DashThreading;
@@ -15,10 +15,10 @@ public final class WriteTask<R, D extends Dashable<R>> extends RecursiveAction {
 	private final int stop;
 	private final D[] outArray;
 	private final Object[] inArray;
-	private final DashConstructor<R, D> constructor;
+	private final Creator<R, D> constructor;
 	private final DashRegistryWriter registry;
 
-	private WriteTask(int threshold, int start, int stop, D[] outArray, Object[] inArray, DashConstructor<R, D> constructor, DashRegistryWriter registry) {
+	private WriteTask(int threshold, int start, int stop, D[] outArray, Object[] inArray, Creator<R, D> constructor, DashRegistryWriter registry) {
 		this.threshold = threshold;
 		this.start = start;
 		this.stop = stop;
@@ -28,8 +28,7 @@ public final class WriteTask<R, D extends Dashable<R>> extends RecursiveAction {
 		this.registry = registry;
 	}
 
-	public WriteTask(String name, D[] outArray, Object[] inArray, DashConstructor<R, D> constructor, DashRegistryWriter registry) {
-		DashLoaderProgress.PROGRESS.setCurrentSubtask(name, inArray.length);
+	public WriteTask(D[] outArray, Object[] inArray, Creator<R, D> constructor, DashRegistryWriter registry) {
 		this.start = 0;
 		this.stop = outArray.length;
 		this.threshold = DashThreading.calcThreshold(stop);
@@ -52,7 +51,7 @@ public final class WriteTask<R, D extends Dashable<R>> extends RecursiveAction {
 
 	private final void computeTask() {
 		for (int i = start; i < stop; i++) {
-			outArray[i] = constructor.invoke((R) inArray[i], registry);
+			outArray[i] = constructor.create((R) inArray[i], registry);
 			DashLoaderProgress.PROGRESS.completedSubTask();
 		}
 	}

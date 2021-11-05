@@ -2,23 +2,23 @@ package dev.quantumfusion.dashloader.core.registry;
 
 import dev.quantumfusion.dashloader.core.Dashable;
 import dev.quantumfusion.dashloader.core.api.annotation.DashObject;
-import dev.quantumfusion.dashloader.core.registry.chunk.write.ChunkWriter;
+import dev.quantumfusion.dashloader.core.registry.chunk.write.AbstractChunkWriter;
 import it.unimi.dsi.fastutil.objects.Object2ByteMap;
 import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 public class DashRegistryWriter {
-	private final Object2IntMap<?> dedup = new Object2IntOpenHashMap<>();
+	private final Object2IntOpenHashMap<?> dedup = new Object2IntOpenHashMap<>();
 	private final Object2ByteMap<Class<?>> target2chunkMappings;
 	private final Object2ByteMap<Class<?>> dash2chunkMappings;
 	private final Object2ByteMap<Class<?>> mappings;
-	private final ChunkWriter<?, ?>[] chunks;
+	private final AbstractChunkWriter<?, ?>[] chunks;
 
 	/**
 	 * This is the registry that will be created when the cache is not available and when {@link DashRegistryWriter#add(Object)} will be used.
 	 */
-	public DashRegistryWriter(ChunkWriter<?, ?>[] chunks) {
+	public DashRegistryWriter(AbstractChunkWriter<?, ?>[] chunks) {
 		this.target2chunkMappings = new Object2ByteOpenHashMap<>();
 		this.dash2chunkMappings = new Object2ByteOpenHashMap<>();
 		this.mappings = new Object2ByteOpenHashMap<>();
@@ -40,8 +40,15 @@ public class DashRegistryWriter {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <R, D extends Dashable<R>> ChunkWriter<R, D> getChunk(Class<D> dashType) {
-		return (ChunkWriter<R, D>) chunks[dash2chunkMappings.getByte(dashType)];
+	public <R, D extends Dashable<R>> AbstractChunkWriter<R, D> getChunk(Class<D> dashType) {
+		return (AbstractChunkWriter<R, D>) chunks[dash2chunkMappings.getByte(dashType)];
+	}
+
+	public <R, D extends Dashable<R>> int addDirect(AbstractChunkWriter<R, D> chunk, R object) {
+		final int objectPos = chunk.add(object);
+		final int pointer = createPointer(objectPos, chunk.pos);
+		((Object2IntMap<R>) dedup).put(object, pointer);
+		return pointer;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -62,7 +69,7 @@ public class DashRegistryWriter {
 		if (chunkPos == -1)
 			throw new RuntimeException("Could not find a ChunkWriter for " + targetClass);
 
-		var chunk = (ChunkWriter<R, ?>) chunks[chunkPos];
+		var chunk = (AbstractChunkWriter<R, ?>) chunks[chunkPos];
 		final var objectPos = chunk.add(object);
 		final int pointer = createPointer(objectPos, chunkPos);
 		((Object2IntMap<R>) dedup).put(object, pointer);
