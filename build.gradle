@@ -22,6 +22,8 @@ dependencies {
 
     implementation libs.fastutil
     implementation libs.jetbrains.annotations
+    implementation libs.gson
+    implementation libs.apacheio
 
     testImplementation libs.junit.jupiter.api
     testRuntimeOnly libs.junit.jupiter.engine

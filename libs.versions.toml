@@ -15,6 +15,13 @@ version = "22.0.0"
 module = "it.unimi.dsi:fastutil"
 version = "8.5.4"
 
+[libraries.apacheio]
+module = "commons-io:commons-io"
+version = "2.11.0"
+
+[libraries.gson]
+module = "com.google.code.gson:gson"
+version = "2.8.9"
 
 [libraries.junit-jupiter-api]
 module = "org.junit.jupiter:junit-jupiter-api"
