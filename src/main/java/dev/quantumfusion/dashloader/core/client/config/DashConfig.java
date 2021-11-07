@@ -1,33 +1,48 @@
 package dev.quantumfusion.dashloader.core.client.config;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class DashConfig {
-	public String[] disabledOptions;
+	public Map<String, Boolean> options = new LinkedHashMap<>();
 
 	// ==================================== Screen ====================================
-	public boolean debugMode;
-	public boolean disableWatermark;
+	public boolean debugMode = false;
+	public int paddingSize = 10;
 
 	// Colors
-	public String backgroundColor;
-	public String foregroundColor;
-	public Map<String, String> colorVariables;
+	public String backgroundColor = "base1";
+	public String foregroundColor = "text";
+	public Map<String, String> colorVariables = Map.of(
+			"red", "#ff6188",
+			"orange", "#fc9867",
+			"yellow", "#ffd866",
+			"green", "#a9dc76",
+			"blue", "#78dce8",
+			"purple", "#ab9df2",
+			"text", "#fcfcfa",
+			"base0", "#19181a",
+			"base1", "#221f22",
+			"base2", "#2d2a2e");
 
 	// Progress bar
-	public int progressBarHeight;
-	public int progressBarSpeedDivision;
-	public String[] progressColors;
-	public String progressTrackColor;
+	public int progressBarHeight = 2;
+	public int progressBarSpeedDivision = 10;
+	public String[] progressColors = new String[]{"red", "orange", "yellow", "green"};
+	public String progressTrackColor = "base0";
 
 	// Lines
-	public int lineSpeed;
-	public int lineWidth;
-	public int lineMinHeight;
-	public int lineMaxHeight;
-	public int lineSpeedDifference;
-	public String lineDirection;
-	public Map<String, Integer> lineColors;
+	public int lineAmount = 100;
+	public int lineWidth = 100;
+	public int lineMinHeight = 4;
+	public int lineMaxHeight = 10;
+	public float lineSpeed = 2;
+	public float lineSpeedDifference = 4;
+	public String lineDirection = "LEFT";
+	public Map<String, Integer> lineColors = Map.of(
+			"base2", 1000,
+			"blue", 50,
+			"red", 1);
 
 
 }

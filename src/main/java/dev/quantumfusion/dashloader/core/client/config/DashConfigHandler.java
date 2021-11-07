@@ -1,11 +1,14 @@
 package dev.quantumfusion.dashloader.core.client.config;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.io.monitor.FileAlterationListener;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,9 +18,9 @@ import java.util.function.Consumer;
 
 public class DashConfigHandler {
 	public static final DashConfigHandler INSTANCE = new DashConfigHandler();
-	private final Gson gson = new Gson();
-	private DashConfig config = new DashConfig();
+	private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 	private Path configPath;
+	public DashConfig config = new DashConfig();
 
 	@Nullable
 	private FileAlterationObserver observer;
@@ -33,7 +36,9 @@ public class DashConfigHandler {
 	public void reloadConfig() {
 		try {
 			if (Files.exists(configPath)) {
-				this.config = gson.fromJson(Files.newBufferedReader(configPath), DashConfig.class);
+				final BufferedReader json = Files.newBufferedReader(configPath);
+				this.config = gson.fromJson(json, DashConfig.class);
+				json.close();
 				return;
 			}
 		} catch (Throwable ignored) {}
@@ -45,7 +50,9 @@ public class DashConfigHandler {
 	public void saveConfig() {
 		try {
 			Files.createDirectories(configPath.getParent());
-			this.gson.toJson(this.config, Files.newBufferedWriter(configPath, StandardOpenOption.CREATE));
+			final BufferedWriter writer = Files.newBufferedWriter(configPath, StandardOpenOption.CREATE);
+			this.gson.toJson(this.config, writer);
+			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
