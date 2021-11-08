@@ -50,7 +50,7 @@ public class DashSerializer<O> {
 			Files.createFile(serializerFileLocation);
 		} catch (IOException ignored) {}
 
-		var factory = SerializerFactory.createDebug(UnsafeIO.class, holderClass);
+		var factory = SerializerFactory.create(UnsafeIO.class, holderClass);
 		factory.addGlobalAnnotation(AbstractDataChunk.class, DataSubclasses.class, new Class[]{DataChunk.class, StagedDataChunk.class});
 		factory.setClassName(getSerializerName(holderClass));
 		factory.setExportPath(serializerFileLocation);
