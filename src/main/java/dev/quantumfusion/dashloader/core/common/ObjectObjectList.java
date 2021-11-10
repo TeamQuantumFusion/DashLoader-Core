@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 @Data
-public record ObjectObjectList<K, V>(List<ObjectObjectEntry<K, V>> list) {
+public record
+ObjectObjectList<K, V>(List<ObjectObjectEntry<K, V>> list) {
 	public ObjectObjectList() {
 		this(new ArrayList<>());
 	}

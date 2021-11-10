@@ -1,8 +1,8 @@
 package dev.quantumfusion.dashloader.core.objects;
 
 import dev.quantumfusion.dashloader.core.Dashable;
-import dev.quantumfusion.dashloader.core.api.annotation.DashObject;
-import dev.quantumfusion.dashloader.core.registry.DashRegistryReader;
+import dev.quantumfusion.dashloader.core.api.DashObject;
+import dev.quantumfusion.dashloader.core.registry.RegistryReader;
 import dev.quantumfusion.hyphen.scan.annotations.Data;
 
 @Data
@@ -14,7 +14,7 @@ public record IdentifierDash(String text) implements Dashable<Identifier> {
 	}
 
 	@Override
-	public Identifier export(DashRegistryReader registry) {
+	public Identifier export(RegistryReader registry) {
 		return new Identifier(text);
 	}
 }

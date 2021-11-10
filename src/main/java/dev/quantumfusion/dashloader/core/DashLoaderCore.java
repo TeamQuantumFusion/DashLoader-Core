@@ -1,84 +1,94 @@
 package dev.quantumfusion.dashloader.core;
 
-import dev.quantumfusion.dashloader.core.registry.*;
-import dev.quantumfusion.dashloader.core.serializer.DashSerializer;
-import dev.quantumfusion.dashloader.core.util.DashThreading;
-import org.jetbrains.annotations.NotNull;
+import dev.quantumfusion.dashloader.core.config.ConfigHandler;
+import dev.quantumfusion.dashloader.core.io.IOHandler;
+import dev.quantumfusion.dashloader.core.progress.ProgressHandler;
+import dev.quantumfusion.dashloader.core.registry.RegistryHandler;
+import dev.quantumfusion.dashloader.core.thread.ThreadHandler;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
-public class DashLoaderCore {
-	public static Consumer<String> PRINT = System.out::println;
-	private final Map<Class<?>, DashSerializer<?>> serializers = new HashMap<>();
-	private final List<DashObjectMetadata<?, ?>> dashObjects;
-	private final Path cacheFolder;
-	private boolean cacheAvailable;
-	private String currentSubCache;
+/**
+ * The heart of dashloader, Handles Config, IO and the serialization
+ */
+public final class DashLoaderCore<R, D extends Dashable<R>> {
+	public static DashLoaderCore<?, ?> CORE;
+	// Basic Information
+	private final List<DashObjectClass<R, D>> dashObjects;
+	private final Consumer<String> print;
+	private final Path cacheDir;
+	private final Path configDir;
 
-	@SafeVarargs
-	public DashLoaderCore(Path cacheFolder, Class<? extends Dashable>... dashables) {
-		DashThreading.init();
-		this.dashObjects = createDashObjectMetadataList(dashables);
-		this.cacheFolder = cacheFolder;
-		try {
-			Files.createDirectories(cacheFolder);
-		} catch (IOException ignored) {}
+	// Handlers
+	private final RegistryHandler<R, D> registryHandler;
+	private final ThreadHandler threadHandler;
+	private final ConfigHandler configHandler;
+	private final ProgressHandler progressHandler;
+	private final IOHandler<?> ioHandler;
+
+	public DashLoaderCore(List<DashObjectClass<R, D>> dashObjects, Consumer<String> print, Path cacheDir, Path configDir) {
+		this.print = print;
+		this.dashObjects = dashObjects;
+		this.cacheDir = cacheDir;
+		this.configDir = configDir;
+
+		// Handlers
+		this.registryHandler = new RegistryHandler<>(dashObjects);
+		this.threadHandler = new ThreadHandler("DashLoaderCore property. UwU");
+		this.configHandler = new ConfigHandler("DashLoaderCore property. OwO");
+		this.progressHandler = new ProgressHandler("DashLoaderCore property. ^w^");
+		this.ioHandler = new IOHandler(dashObjects, "DashLoaderCore property. >w<", cacheDir);
 	}
 
-	@NotNull
-	private static List<DashObjectMetadata<?, ?>> createDashObjectMetadataList(Class<? extends Dashable>[] dashables) {
-		var classEntries = new ArrayList<DashObjectMetadata<?, ?>>();
-		for (var entry : dashables) classEntries.add(DashObjectMetadata.create(entry));
-		return classEntries;
+	public static <R, D extends Dashable<R>> void initialize(Path cacheDir, Path configDir, Collection<Class<D>> dashClasses, Consumer<String> print) {
+		if (CORE != null) throw new RuntimeException("Core is already initialized");
+		CORE = new DashLoaderCore<>(parseDashObjects(dashClasses), print, cacheDir, configDir);
 	}
 
-	public void setCurrentSubcache(String name) {
-		this.cacheAvailable = Files.exists(cacheFolder.resolve(name + "/"));
-		this.currentSubCache = name;
-	}
-
-	public boolean isCacheMissing() {
-		return !cacheAvailable;
-	}
-
-	public DashRegistryWriter createWriter(Map<Class<?>, WriteFailCallback<?, ?>> callbacks) {
-		return DashRegistryBuilder.createWriter(dashObjects, callbacks);
-	}
-
-	public DashRegistryReader createReader(ChunkDataHolder... holders) {
-		final DashRegistryReader reader = DashRegistryBuilder.createReader(holders);
-		reader.export();
-		return reader;
-	}
-
-	@SafeVarargs
-	public final void prepareSerializer(Class<?> dataObject, Class<? extends Dashable>... dashables) {
-		serializers.put(dataObject, DashSerializer.create(cacheFolder, dataObject, dashObjects, dashables));
-	}
-
-	@SuppressWarnings("unchecked")
-	public final <O> O load(Class<O> dataObject) {
-		try {
-			return (O) serializers.get(dataObject).decode(currentSubCache);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+	private static <R, D extends Dashable<R>> List<DashObjectClass<R, D>> parseDashObjects(Collection<Class<D>> dashClasses) {
+		var out = new ArrayList<DashObjectClass<R, D>>();
+		for (Class<D> dashClass : dashClasses) {
+			out.add(new DashObjectClass<>(dashClass));
 		}
+		return Collections.unmodifiableList(out);
 	}
 
-	@SuppressWarnings("unchecked")
-	public final <O> void save(O dataObject) {
-		try {
-			((DashSerializer<O>) serializers.get(dataObject.getClass())).encode(dataObject, currentSubCache);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+	// Getters
+	public RegistryHandler<R, D> getRegistryHandler() {
+		return registryHandler;
 	}
 
+	public ThreadHandler getThreadHandler() {
+		return threadHandler;
+	}
+
+	public ConfigHandler getConfigHandler() {
+		return configHandler;
+	}
+
+	public ProgressHandler getProgressHandler() {
+		return progressHandler;
+	}
+
+	public IOHandler<?> getIoHandler() {
+		return ioHandler;
+	}
+
+	// Print things
+	public void info(String info) {
+		print.accept("/info/ " + info);
+	}
+
+	public void warn(String info) {
+		print.accept("/warn/ " + info);
+	}
+
+	public void error(String info) {
+		print.accept("/error/ " + info);
+	}
 }

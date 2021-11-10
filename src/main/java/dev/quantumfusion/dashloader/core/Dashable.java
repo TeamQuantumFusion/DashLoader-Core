@@ -1,22 +1,22 @@
 package dev.quantumfusion.dashloader.core;
 
-import dev.quantumfusion.dashloader.core.registry.DashRegistryReader;
+import dev.quantumfusion.dashloader.core.registry.RegistryReader;
 
 public interface Dashable<R> {
 	/**
-	 * Runs before toUndash on a single thread
+	 * Runs before {@link Dashable#export(RegistryReader)} on a single thread
 	 */
-	default void prepare(DashRegistryReader writer) {
-	}
-
-	/**
-	 * Runs after toUndash on a single thread
-	 */
-	default void apply(DashRegistryReader reader) {
+	default void preExport(RegistryReader reader) {
 	}
 
 	/**
 	 * Runs in parallel returning the target object.
 	 */
-	R export(DashRegistryReader registry);
+	R export(RegistryReader reader);
+
+	/**
+	 * Runs after {@link Dashable#export(RegistryReader)} on a single thread
+	 */
+	default void postExport(RegistryReader reader) {
+	}
 }
