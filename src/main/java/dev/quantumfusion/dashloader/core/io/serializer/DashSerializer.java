@@ -4,6 +4,8 @@ import dev.quantumfusion.dashloader.core.DashLoaderCore;
 import dev.quantumfusion.dashloader.core.DashObjectClass;
 import dev.quantumfusion.dashloader.core.Dashable;
 import dev.quantumfusion.dashloader.core.progress.ProgressHandler;
+import dev.quantumfusion.dashloader.core.progress.task.CountTask;
+import dev.quantumfusion.dashloader.core.progress.task.DynamicTask;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.DataChunk;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.StagedDataChunk;
@@ -82,8 +84,8 @@ public class DashSerializer<O> {
 	public void encode(O object, Path subCache) throws IOException {
 		final ProgressHandler progress = DashLoaderCore.PROGRESS;
 
-
-		progress.setCurrentTask("Saving " + dataClass.getSimpleName()).startSubTask(compressor == null ? 2 : 4);
+		CountTask task = new CountTask(compressor == null ? 2 : 4);
+		progress.getCurrentContext().setSubtask(task);
 		final Path outPath = getFilePath(subCache);
 		prepareFile(outPath);
 
@@ -94,17 +96,19 @@ public class DashSerializer<O> {
 			if (compressor != null) {
 				final var out = ByteBuffer.allocateDirect(compressor.maxLength(rawFileSize) + 4);
 				final var byteBuffer = ByteBuffer.allocateDirect(rawFileSize);
-				progress.completedSubTask();
+				final var byteBufferTask = new DynamicTask(() -> byteBuffer.position() / (double) rawFileSize);
+				task.completedTask();
 
-				progress.setSubSubtaskProgressProvider(() -> byteBuffer.position() / (double) rawFileSize);
+
+				task.setSubtask(byteBufferTask);
 				serializer.put(ByteBufferIO.wrap(byteBuffer), object);
-				progress.completedSubTask();
+				task.completedTask();
 
 				byteBuffer.rewind();
 
-				progress.setSubSubtaskProgressProvider(() -> byteBuffer.position() / (double) rawFileSize);
+				task.setSubtask(byteBufferTask);
 				compressor.compress(byteBuffer, out);
-				progress.completedSubTask();
+				task.completedTask();
 
 				final int position = out.position();
 				out.limit(position);
@@ -113,15 +117,16 @@ public class DashSerializer<O> {
 				out.rewind();
 				map.put(out);
 			} else {
-				final MappedByteBuffer map = channel.map(FileChannel.MapMode.READ_WRITE, 0, rawFileSize);
-				progress.completedSubTask();
+				final var map = channel.map(FileChannel.MapMode.READ_WRITE, 0, rawFileSize);
+				final var byteBufferTask = new DynamicTask(() -> map.position() / (double) rawFileSize);
+				task.completedTask();
 
-				progress.setSubSubtaskProgressProvider(() -> map.position() / (double) rawFileSize);
+				task.setSubtask(byteBufferTask);
 				serializer.put(ByteBufferIO.wrap(map), object);
 
 			}
 		}
-		progress.completedSubTask();
+		task.completedTask();
 	}
 
 
