@@ -1,5 +1,7 @@
 package dev.quantumfusion.dashloader.core.thread;
 
+import dev.quantumfusion.hyphen.scan.annotations.Data;
+
 import java.util.concurrent.ForkJoinTask;
 import java.util.function.Function;
 
@@ -53,6 +55,7 @@ public final class IndexedArrayMapTask<I, O> extends ForkJoinTask<Void> {
 	protected final void setRawResult(Void mustBeNull) {
 	}
 
+	@Data
 	public record IndexedArrayEntry<O>(O object, int pos) {
 	}
 }

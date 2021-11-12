@@ -16,67 +16,41 @@ import java.util.function.Consumer;
 /**
  * The heart of dashloader, Handles Config, IO and the serialization
  */
-public final class DashLoaderCore<R, D extends Dashable<R>> {
-	public static DashLoaderCore<?, ?> CORE;
+public final class DashLoaderCore {
+	public static DashLoaderCore CORE;
+	public static RegistryHandler REGISTRY;
+	public static ThreadHandler THREAD;
+	public static ConfigHandler CONFIG;
+	public static ProgressHandler PROGRESS;
+	public static IOHandler IO;
+
+	private static boolean INITIALIZED = false;
 	// Basic Information
-	private final List<DashObjectClass<R, D>> dashObjects;
 	private final Consumer<String> print;
-	private final Path cacheDir;
-	private final Path configDir;
 
-	// Handlers
-	private final RegistryHandler<R, D> registryHandler;
-	private final ThreadHandler threadHandler;
-	private final ConfigHandler configHandler;
-	private final ProgressHandler progressHandler;
-	private final IOHandler<?> ioHandler;
-
-	public DashLoaderCore(List<DashObjectClass<R, D>> dashObjects, Consumer<String> print, Path cacheDir, Path configDir) {
+	private DashLoaderCore(List<DashObjectClass<?, ?>> dashObjects, Consumer<String> print, Path cacheDir, Path configPath) {
 		this.print = print;
-		this.dashObjects = dashObjects;
-		this.cacheDir = cacheDir;
-		this.configDir = configDir;
 
 		// Handlers
-		this.registryHandler = new RegistryHandler<>(dashObjects);
-		this.threadHandler = new ThreadHandler("DashLoaderCore property. UwU");
-		this.configHandler = new ConfigHandler("DashLoaderCore property. OwO");
-		this.progressHandler = new ProgressHandler("DashLoaderCore property. ^w^");
-		this.ioHandler = new IOHandler(dashObjects, "DashLoaderCore property. >w<", cacheDir);
+		REGISTRY = new RegistryHandler(dashObjects);
+		THREAD = new ThreadHandler("DashLoaderCore property. UwU");
+		CONFIG = new ConfigHandler("DashLoaderCore property. OwO", configPath);
+		PROGRESS = new ProgressHandler("DashLoaderCore property. ^w^");
+		IO = new IOHandler(dashObjects, "DashLoaderCore property. >w<", cacheDir);
+		INITIALIZED = true;
 	}
 
-	public static <R, D extends Dashable<R>> void initialize(Path cacheDir, Path configDir, Collection<Class<D>> dashClasses, Consumer<String> print) {
-		if (CORE != null) throw new RuntimeException("Core is already initialized");
-		CORE = new DashLoaderCore<>(parseDashObjects(dashClasses), print, cacheDir, configDir);
+	public static void initialize(Path cacheDir, Path configPath, Collection<Class<?>> dashClasses, Consumer<String> print) {
+		if (INITIALIZED) throw new RuntimeException("Core is already initialized");
+		CORE = new DashLoaderCore(parseDashObjects(dashClasses), print, cacheDir, configPath);
 	}
 
-	private static <R, D extends Dashable<R>> List<DashObjectClass<R, D>> parseDashObjects(Collection<Class<D>> dashClasses) {
-		var out = new ArrayList<DashObjectClass<R, D>>();
-		for (Class<D> dashClass : dashClasses) {
-			out.add(new DashObjectClass<>(dashClass));
+	private static List<DashObjectClass<?, ?>> parseDashObjects(Collection<Class<?>> dashClasses) {
+		var out = new ArrayList<DashObjectClass<?, ?>>();
+		for (Class<?> dashClass : dashClasses) {
+			out.add(new DashObjectClass(dashClass));
 		}
 		return Collections.unmodifiableList(out);
-	}
-
-	// Getters
-	public RegistryHandler<R, D> getRegistryHandler() {
-		return registryHandler;
-	}
-
-	public ThreadHandler getThreadHandler() {
-		return threadHandler;
-	}
-
-	public ConfigHandler getConfigHandler() {
-		return configHandler;
-	}
-
-	public ProgressHandler getProgressHandler() {
-		return progressHandler;
-	}
-
-	public IOHandler<?> getIoHandler() {
-		return ioHandler;
 	}
 
 	// Print things

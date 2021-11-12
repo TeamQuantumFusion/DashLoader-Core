@@ -18,22 +18,19 @@ import java.util.function.Consumer;
 
 public class ConfigHandler {
 	private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-	private Path configPath;
+	private final Path configPath;
 	public DashConfig config = new DashConfig();
 
 	@Nullable
 	private FileAlterationObserver observer;
 
-	public ConfigHandler(String password) {
+	public ConfigHandler(String password, Path configPath) {
+		this.configPath = configPath;
 		if (!password.equals("DashLoaderCore property. OwO")) {
 			throw new RuntimeException("You cannot initialize DashConfigHandler. git gud.");
 		}
 	}
 
-	public void setConfigPath(Path path) {
-		if (observer != null) throw new RuntimeException("Tried to set path when its already used");
-		this.configPath = path;
-	}
 
 	public void reloadConfig() {
 		try {

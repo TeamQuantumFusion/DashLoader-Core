@@ -31,11 +31,15 @@ public final class DashFactory<R, D extends Dashable<R>> {
 		try {
 			return creator.create(raw, writer);
 		} catch (Throwable e) {
-			final D failed = failCallback.failed(raw, writer);
-			if (failed != null) {
-				return failed;
-			} else {
-				throw new CreationError("Could not find a way to create " + raw.getClass().getSimpleName());
+			try {
+				final D failed = failCallback.failed(raw, writer);
+				if (failed != null) {
+					return failed;
+				} else {
+					throw new CreationError("Could not find a way to create " + raw.getClass().getSimpleName());
+				}
+			} catch (Throwable throwable) {
+				throw new RuntimeException("Fail in " + this.getClass().getSimpleName(), e);
 			}
 		}
 	}

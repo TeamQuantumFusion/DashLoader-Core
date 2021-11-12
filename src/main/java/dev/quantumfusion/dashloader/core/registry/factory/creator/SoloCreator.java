@@ -65,10 +65,10 @@ public class SoloCreator<R, D extends Dashable<R>> implements Creator<R, D> {
 	// RAW object
 	// EMPTY
 	private enum InvokeType {
-		FULL(MethodHandle::invokeExact, doc -> new Class[]{doc.getTargetClass(), RegistryWriter.class}),
-		WRITER((mh, raw, writer) -> mh.invokeExact(writer), doc -> new Class[]{RegistryWriter.class}),
-		RAW((mh, raw, writer) -> mh.invokeExact(raw), doc -> new Class[]{doc.getTargetClass()}),
-		EMPTY((mh, raw, writer) -> mh.invokeExact(), doc -> new Class[0]);
+		FULL((methodHandle, args, args2) -> methodHandle.invoke(args, args2), doc -> new Class[]{doc.getTargetClass(), RegistryWriter.class}),
+		WRITER((mh, raw, writer) -> mh.invoke(writer), doc -> new Class[]{RegistryWriter.class}),
+		RAW((mh, raw, writer) -> mh.invoke(raw), doc -> new Class[]{doc.getTargetClass()}),
+		EMPTY((mh, raw, writer) -> mh.invoke(), doc -> new Class[0]);
 		private final FactoryFunction creator;
 		private final Function<DashObjectClass<?, ?>, Class<?>[]> parameters;
 

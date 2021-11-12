@@ -12,11 +12,11 @@ import dev.quantumfusion.dashloader.core.registry.factory.DashFactory;
 import java.util.*;
 import java.util.function.Function;
 
-public final class RegistryHandler<R, D extends Dashable<R>> {
-	private final Collection<DashObjectClass<R, D>> dashObjects;
-	private final Map<Class<?>, DashFactory.FailCallback<R, D>> callbacks = new HashMap<>();
+public final class RegistryHandler {
+	private final Collection<DashObjectClass<?, ?>> dashObjects;
+	private final Map<Class<?>, DashFactory.FailCallback<?, ?>> callbacks = new HashMap<>();
 
-	public RegistryHandler(Collection<DashObjectClass<R, D>> dashObjects) {
+	public RegistryHandler(Collection<DashObjectClass<?, ?>> dashObjects) {
 		this.dashObjects = dashObjects;
 	}
 
@@ -62,7 +62,7 @@ public final class RegistryHandler<R, D extends Dashable<R>> {
 		return out;
 	}
 
-	public void addCallback(Class<D> dashTag, DashFactory.FailCallback<R, D> callback) {
+	public <R, D extends Dashable<R>> void addCallback(Class<D> dashTag, DashFactory.FailCallback<R, D> callback) {
 		this.callbacks.put(dashTag, callback);
 	}
 
@@ -79,17 +79,17 @@ public final class RegistryHandler<R, D extends Dashable<R>> {
 
 	}
 
-	public RegistryWriter createWriter() {
-		Map<Class<?>, DashObjectGroup> groups = new HashMap<>();
-		for (DashObjectClass<R, D> dashObject : dashObjects) {
-			//noinspection unchecked
-			var group = groups.computeIfAbsent(dashObject.getTag(), aClass -> new DashObjectGroup((Class<D>) aClass));
+	public <R, D extends Dashable<R>> RegistryWriter createWriter() {
+		Map<Class<?>, DashObjectGroup<R, D>> groups = new HashMap<>();
+		for (DashObjectClass<?, ?> raw : dashObjects) {
+			DashObjectClass<R, D> dashObject = (DashObjectClass<R, D>) raw;
+			var group = groups.computeIfAbsent(dashObject.getTag(), aClass -> new DashObjectGroup<>(dashObject.getTag()));
 			group.addDashObject(dashObject);
 		}
 
 
-		List<DashObjectGroup> groupOrder = calculateBuildOrder(Holder.map(groups.values(), objectGroup -> {
-			objectGroup.clearInternalReferences();
+		List<DashObjectGroup<R, D>> groupOrder = calculateBuildOrder(Holder.map(groups.values(), objectGroup -> {
+			objectGroup.prepareForSort(groups);
 			return new Holder<>(objectGroup.dashTag, objectGroup.dependencies, objectGroup);
 		}));
 
@@ -102,10 +102,11 @@ public final class RegistryHandler<R, D extends Dashable<R>> {
 			throw new RuntimeException("Hit group limit of 63. Please contact QuantumFusion if you hit this limit!");
 
 		for (int i = 0; i < groupOrder.size(); i++) {
-			final DashObjectGroup group = groupOrder.get(i);
+			final DashObjectGroup<R, D> group = groupOrder.get(i);
 			chunks[i] = group.createWriteChunk((byte) i, writer);
 			writer.addChunkMapping(group.dashTag, (byte) i);
 		}
+
 
 		writer.compileMappings();
 		return writer;
@@ -130,21 +131,24 @@ public final class RegistryHandler<R, D extends Dashable<R>> {
 		}
 	}
 
-	private final class DashObjectGroup {
-		private final Class<D> dashTag;
+	private final class DashObjectGroup<R, D extends Dashable<R>> {
+		private final Class<? extends Dashable<?>> dashTag;
 		// enforce list on stagedWriter and force collection here to prevent this used when sorted build order is required.
 		private final Collection<DashObjectClass<R, D>> dashObjects;
+		// dependency to source map
 		private final Set<Class<?>> dependencies;
+
+
 		private boolean internalReferences = false;
 
 
-		private DashObjectGroup(Class<D> dashTag, Collection<DashObjectClass<R, D>> dashObjects, Set<Class<?>> dependencies) {
+		private DashObjectGroup(Class<? extends Dashable<?>> dashTag, Collection<DashObjectClass<R, D>> dashObjects, Set<Class<?>> dependencies) {
 			this.dashTag = dashTag;
 			this.dashObjects = dashObjects;
 			this.dependencies = dependencies;
 		}
 
-		public DashObjectGroup(Class<D> dashTag) {
+		public DashObjectGroup(Class<? extends Dashable<?>> dashTag) {
 			this(dashTag, new ArrayList<>(), new HashSet<>());
 		}
 
@@ -153,15 +157,28 @@ public final class RegistryHandler<R, D extends Dashable<R>> {
 			dependencies.addAll(dashObject.getDependencies());
 		}
 
-		public void clearInternalReferences() {
+		public void prepareForSort(Map<Class<?>, DashObjectGroup<R, D>> groups) {
 			// remove internal references and check if there are any
 			for (DashObjectClass<R, D> group : dashObjects) {
 				this.internalReferences |= dependencies.remove(group.getDashClass());
 			}
+
+
+			// make all dependencies targeted to a group
+			for (DashObjectGroup<R, D> value : groups.values()) {
+				for (DashObjectClass<R, D> dashObject : value.dashObjects) {
+					final Class<D> dashClass = dashObject.getDashClass();
+					if (dependencies.contains(dashClass)) {
+						dependencies.remove(dashClass);
+						dependencies.add(dashObject.getTag());
+					}
+				}
+			}
 		}
 
+		@SuppressWarnings("unchecked")
 		public AbstractWriteChunk<R, D> createWriteChunk(byte pos, RegistryWriter writer) {
-			var callback = callbacks.getOrDefault(dashTag, (raw, writer1) -> {
+			var callback = ((Map<Class<?>, DashFactory.FailCallback<R, D>>) (Map<?, ?>) callbacks).getOrDefault(dashTag, (raw, writer1) -> {
 				throw new RuntimeException("Cannot create " + raw);
 			});
 
@@ -169,7 +186,22 @@ public final class RegistryHandler<R, D extends Dashable<R>> {
 
 			var name = dashTag.getSimpleName();
 			if (internalReferences) {
-				var groupsSorted = calculateBuildOrder(Holder.map(dashObjects, obj -> new Holder<>(obj.getDashClass(), obj.getDependencies(), obj)));
+				Set<Class<?>> internalClasses = new HashSet<>();
+				for (DashObjectClass<R, D> dashObject : dashObjects) {
+					internalClasses.add(dashObject.getDashClass());
+				}
+
+				Map<DashObjectClass<R, D>, List<Class<?>>> internalDependencies = new HashMap<>();
+
+				for (DashObjectClass<R, D> dashObject : dashObjects) {
+					for (Class<?> dependency : dashObject.getDependencies()) {
+						if (internalClasses.contains(dependency)) {
+							internalDependencies.computeIfAbsent(dashObject, c -> new ArrayList<>()).add(dependency);
+						}
+					}
+				}
+
+				var groupsSorted = calculateBuildOrder(Holder.map(dashObjects, obj -> new Holder<>(obj.getDashClass(), internalDependencies.getOrDefault(obj, List.of()), obj)));
 				return new StagedWriteChunk<>(pos, name, writer, groupsSorted, factory);
 			} else {
 				if (dependencies.size() == 0) {

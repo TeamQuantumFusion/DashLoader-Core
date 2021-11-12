@@ -10,52 +10,46 @@ import dev.quantumfusion.dashloader.core.registry.chunk.data.StagedDataChunk;
 import dev.quantumfusion.hyphen.ClassDefiner;
 import dev.quantumfusion.hyphen.HyphenSerializer;
 import dev.quantumfusion.hyphen.SerializerFactory;
-import dev.quantumfusion.hyphen.io.UnsafeIO;
+import dev.quantumfusion.hyphen.io.ByteBufferIO;
 import dev.quantumfusion.hyphen.scan.annotations.DataSubclasses;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public class DashSerializer<O> {
 	private final Class<O> dataClass;
-	private final HyphenSerializer<UnsafeIO, O> serializer;
+	private final HyphenSerializer<ByteBufferIO, O> serializer;
 	@Nullable
 	private final SerializerCompressor compressor;
 
-	public DashSerializer(Class<O> dataClass, HyphenSerializer<UnsafeIO, O> serializer) {
+	public DashSerializer(Class<O> dataClass, HyphenSerializer<ByteBufferIO, O> serializer) {
 		this.dataClass = dataClass;
 		this.serializer = serializer;
-		this.compressor = SerializerCompressor.create(DashLoaderCore.CORE.getConfigHandler().config.compression);
+		this.compressor = SerializerCompressor.create(DashLoaderCore.CONFIG.config.compression);
 	}
 
-	@SafeVarargs
-	public static <O> DashSerializer<O> create(Path cacheArea, Class<O> holderClass, List<DashObjectClass<?, ?>> dashObjects, Class<? extends Dashable>... dashables) {
+	public static <F> DashSerializer<F> create(Path cacheArea, Class<F> holderClass, List<DashObjectClass<?, ?>> dashObjects, Class<? extends Dashable<?>>[] dashables) {
 		var serializerFileLocation = cacheArea.resolve(holderClass.getSimpleName().toLowerCase() + ".dlc");
 		prepareFile(serializerFileLocation);
 		if (Files.exists(serializerFileLocation)) {
 			var classDefiner = new ClassDefiner(Thread.currentThread().getContextClassLoader());
 			try {
 				classDefiner.def(getSerializerName(holderClass), Files.readAllBytes(serializerFileLocation));
-				return new DashSerializer<>(holderClass, (HyphenSerializer<UnsafeIO, O>) ClassDefiner.SERIALIZER);
+				return new DashSerializer<>(holderClass, (HyphenSerializer<ByteBufferIO, F>) ClassDefiner.SERIALIZER);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-
-		try {
-			Files.createFile(serializerFileLocation);
-		} catch (IOException ignored) {}
-
-		var factory = SerializerFactory.create(UnsafeIO.class, holderClass);
+		var factory = SerializerFactory.createDebug(ByteBufferIO.class, holderClass);
 		factory.addGlobalAnnotation(AbstractDataChunk.class, DataSubclasses.class, new Class[]{DataChunk.class, StagedDataChunk.class});
 		factory.setClassName(getSerializerName(holderClass));
 		factory.setExportPath(serializerFileLocation);
@@ -86,30 +80,46 @@ public class DashSerializer<O> {
 	}
 
 	public void encode(O object, Path subCache) throws IOException {
-		final ProgressHandler progress = DashLoaderCore.CORE.getProgressHandler();
-		progress.setCurrentTask("Saving " + dataClass.getSimpleName()).startSubTask(4);
-		prepareFile(subCache);
+		final ProgressHandler progress = DashLoaderCore.PROGRESS;
 
-		final int measure = serializer.measure(object);
-		final ByteBuffer rawEncode = ByteBuffer.allocateDirect(measure);
-		final var wrap = UnsafeIO.wrap(rawEncode);
-		progress.completedSubTask();
 
-		serializer.put(wrap, object);
-		progress.completedSubTask();
+		progress.setCurrentTask("Saving " + dataClass.getSimpleName()).startSubTask(compressor == null ? 2 : 4);
+		final Path outPath = getFilePath(subCache);
+		prepareFile(outPath);
 
-		final ByteBuffer out;
-		if (compressor != null) {
-			out = ByteBuffer.allocateDirect(compressor.maxLength(measure) + 4);
-			out.putInt(measure);
-			compressor.compress(rawEncode, out);
-			out.limit(out.position());
-			out.rewind();
-		} else out = rawEncode;
-		progress.completedSubTask();
 
-		try (FileChannel channel = FileChannel.open(subCache, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
-			channel.map(FileChannel.MapMode.READ_WRITE, 0, out.remaining()).put(out);
+		try (FileChannel channel = FileChannel.open(outPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
+			final int rawFileSize = serializer.measure(object);
+
+			if (compressor != null) {
+				final var out = ByteBuffer.allocateDirect(compressor.maxLength(rawFileSize) + 4);
+				final var byteBuffer = ByteBuffer.allocateDirect(rawFileSize);
+				progress.completedSubTask();
+
+				progress.setSubSubtaskProgressProvider(() -> byteBuffer.position() / (double) rawFileSize);
+				serializer.put(ByteBufferIO.wrap(byteBuffer), object);
+				progress.completedSubTask();
+
+				byteBuffer.rewind();
+
+				progress.setSubSubtaskProgressProvider(() -> byteBuffer.position() / (double) rawFileSize);
+				compressor.compress(byteBuffer, out);
+				progress.completedSubTask();
+
+				final int position = out.position();
+				out.limit(position);
+				final MappedByteBuffer map = channel.map(FileChannel.MapMode.READ_WRITE, 0, position + 4);
+				map.putInt(rawFileSize); // actual size
+				out.rewind();
+				map.put(out);
+			} else {
+				final MappedByteBuffer map = channel.map(FileChannel.MapMode.READ_WRITE, 0, rawFileSize);
+				progress.completedSubTask();
+
+				progress.setSubSubtaskProgressProvider(() -> map.position() / (double) rawFileSize);
+				serializer.put(ByteBufferIO.wrap(map), object);
+
+			}
 		}
 		progress.completedSubTask();
 	}
@@ -117,23 +127,24 @@ public class DashSerializer<O> {
 
 	@NotNull
 	private Path getFilePath(Path subCache) {
-		return subCache.resolve(dataClass.getSimpleName().toLowerCase(Locale.ROOT) + ".dld");
+		return subCache.resolve(dataClass.getSimpleName().toLowerCase() + ".dld");
 	}
 
 	public O decode(Path subCache) throws IOException {
-
 		prepareFile(subCache);
 
-		try (FileChannel channel = FileChannel.open(subCache)) {
-			var map = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
-
+		try (FileChannel channel = FileChannel.open(getFilePath(subCache))) {
+			final long size = channel.size();
+			System.out.println(size);
+			var map = channel.map(FileChannel.MapMode.READ_ONLY, 0, size);
 			ByteBuffer decoded;
 			if (compressor != null) {
 				decoded = ByteBuffer.allocateDirect(map.getInt());
 				compressor.decompress(map, decoded);
+				decoded.rewind();
 			} else decoded = map;
 
-			return serializer.get(UnsafeIO.wrap(decoded));
+			return serializer.get(ByteBufferIO.wrap(decoded));
 		}
 	}
 }

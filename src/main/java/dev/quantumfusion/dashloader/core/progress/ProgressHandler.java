@@ -1,12 +1,19 @@
 package dev.quantumfusion.dashloader.core.progress;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 public final class ProgressHandler {
 	private final AtomicInteger totalTasks = new AtomicInteger(1);
 	private final AtomicInteger completeTasks = new AtomicInteger(0);
+
 	private final AtomicInteger totalSubTasks = new AtomicInteger(1);
 	private final AtomicInteger completeSubTasks = new AtomicInteger(0);
+
+	@Nullable
+	private Supplier<Double> subSubTaskProgress;
 
 	private String currentTask;
 
@@ -32,7 +39,18 @@ public final class ProgressHandler {
 	public ProgressHandler startSubTask(int tasks) {
 		this.totalSubTasks.set(tasks);
 		this.completeSubTasks.set(0);
+		this.subSubTaskProgress = null;
 		return this;
+	}
+
+	public void task(Runnable runnable) {
+		runnable.run();
+		completedTask();
+	}
+
+	public void subTask(Runnable runnable) {
+		runnable.run();
+		completedSubTask();
 	}
 
 	public ProgressHandler completedTask() {
@@ -42,14 +60,23 @@ public final class ProgressHandler {
 
 	public ProgressHandler completedSubTask() {
 		completeSubTasks.incrementAndGet();
+		this.subSubTaskProgress = null;
+		return this;
+	}
+
+	public ProgressHandler setSubSubtaskProgressProvider(Supplier<Double> subSubtaskProgressProvider) {
+		subSubTaskProgress = subSubtaskProgressProvider;
 		return this;
 	}
 
 	private void tickProgress() {
 		final double totalComplete = completeTasks.get() / (double) totalTasks.get();
 		final double subComplete = completeSubTasks.get() / (double) totalSubTasks.get();
+		final double subSubComplete = subSubTaskProgress == null ? 0 : subSubTaskProgress.get();
+
 		final double subMargin = 1 / (double) totalTasks.get();
-		this.actualProgress = totalComplete + (subComplete * subMargin);
+		final double subSubMargin = 1 / (double) totalSubTasks.get();
+		this.actualProgress = totalComplete + ((subComplete + (subSubComplete * subSubMargin)) * subMargin);
 
 		final double divisionSpeed = (actualProgress < currentProgress) ? 3 : 10;
 		this.currentProgress += (actualProgress - currentProgress) / divisionSpeed;

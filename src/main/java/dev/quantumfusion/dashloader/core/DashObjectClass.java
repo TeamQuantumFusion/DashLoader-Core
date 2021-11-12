@@ -21,7 +21,7 @@ public final class DashObjectClass<R, D extends Dashable<R>> {
 	@Nullable
 	private Class<R> targetClass;
 	@Nullable
-	private Class<? extends D> dashTag;
+	private Class<? extends Dashable<?>> dashTag;
 	@Nullable
 	private List<Class<?>> dependencies;
 
@@ -47,12 +47,12 @@ public final class DashObjectClass<R, D extends Dashable<R>> {
 
 	// lazy
 	@NotNull
-	public Class<? extends D> getTag() {
+	public Class<? extends Dashable<?>> getTag() {
 		if (dashTag == null) {
-			Class<? extends D> dashInterface = null;
+			Class<? extends Dashable<?>> dashInterface = null;
 			for (Class<?> anInterface : dashClass.getInterfaces()) {
 				if (Dashable.class.isAssignableFrom(anInterface)) {
-					dashInterface = (Class<? extends D>) anInterface;
+					dashInterface = (Class<? extends Dashable<?>>) anInterface;
 					break;
 				}
 			}
@@ -60,7 +60,9 @@ public final class DashObjectClass<R, D extends Dashable<R>> {
 			if (dashInterface == null)
 				throw new RuntimeException(dashClass.getSimpleName() + " does not have an interface that inherits Dashable");
 
-			this.dashTag = dashInterface == Dashable.class ? dashClass : dashInterface;
+
+			//noinspection RedundantCast // very required
+			this.dashTag = (dashInterface == ((Class<? extends Dashable>) Dashable.class) ? dashClass : dashInterface);
 		}
 		return dashTag;
 	}

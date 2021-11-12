@@ -5,16 +5,12 @@ import dev.quantumfusion.hyphen.scan.annotations.Data;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Data
 public class CacheArea {
 	public final List<SubCacheArea> subCaches;
 	public final String name;
-
-	transient Map<String, SubCacheArea> subCachesMap = new HashMap<>();
 
 	public CacheArea(List<SubCacheArea> subCaches, String name) {
 		this.subCaches = subCaches;

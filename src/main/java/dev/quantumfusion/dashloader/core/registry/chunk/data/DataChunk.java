@@ -3,9 +3,11 @@ package dev.quantumfusion.dashloader.core.registry.chunk.data;
 import dev.quantumfusion.dashloader.core.DashLoaderCore;
 import dev.quantumfusion.dashloader.core.Dashable;
 import dev.quantumfusion.dashloader.core.registry.RegistryReader;
+import dev.quantumfusion.hyphen.scan.annotations.Data;
 
+@Data
 public class DataChunk<R, D extends Dashable<R>> extends AbstractDataChunk<R, D> {
-	private final D[] dashables;
+	public final D[] dashables;
 
 	public DataChunk(byte pos, String name, D[] dashables) {
 		super(pos, name);
@@ -19,7 +21,7 @@ public class DataChunk<R, D extends Dashable<R>> extends AbstractDataChunk<R, D>
 
 	@Override
 	public void export(Object[] data, RegistryReader registry) {
-		DashLoaderCore.CORE.getThreadHandler().parallelExport(dashables, data, registry);
+		DashLoaderCore.THREAD.parallelExport(dashables, data, registry);
 	}
 
 	@Override

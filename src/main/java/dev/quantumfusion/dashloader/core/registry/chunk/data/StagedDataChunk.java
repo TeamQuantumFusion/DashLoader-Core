@@ -5,7 +5,9 @@ import dev.quantumfusion.dashloader.core.Dashable;
 import dev.quantumfusion.dashloader.core.registry.RegistryReader;
 import dev.quantumfusion.dashloader.core.thread.IndexedArrayMapTask;
 import dev.quantumfusion.dashloader.core.thread.ThreadHandler;
+import dev.quantumfusion.hyphen.scan.annotations.Data;
 
+@Data
 public class StagedDataChunk<R, D extends Dashable<R>> extends AbstractDataChunk<R, D> {
 	public final IndexedArrayMapTask.IndexedArrayEntry<D>[][] dashables;
 
@@ -25,7 +27,7 @@ public class StagedDataChunk<R, D extends Dashable<R>> extends AbstractDataChunk
 
 	@Override
 	public void export(Object[] data, RegistryReader registry) {
-		final ThreadHandler threadHandler = DashLoaderCore.CORE.getThreadHandler();
+		final ThreadHandler threadHandler = DashLoaderCore.THREAD;
 		for (IndexedArrayMapTask.IndexedArrayEntry<D>[] dashable : dashables) {
 			threadHandler.parallelExport(dashable, data, registry);
 		}

@@ -5,6 +5,7 @@ import dev.quantumfusion.dashloader.core.Dashable;
 import dev.quantumfusion.dashloader.core.io.serializer.DashSerializer;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,11 +14,9 @@ import java.util.Map;
 
 /**
  * The IO Module of DashLoaderCore. Handles Serializers and Caches.
- *
- * @param <F> Data File Object
  */
-public final class IOHandler<F> {
-	private final Map<Class<F>, DashSerializer<F>> serializers = new HashMap<>();
+public final class IOHandler {
+	private final Map<Class<?>, DashSerializer<?>> serializers = new HashMap<>();
 	private final Map<String, CacheArea> caches = new HashMap<>();
 
 	private final List<DashObjectClass<?, ?>> dashObjects;
@@ -35,22 +34,26 @@ public final class IOHandler<F> {
 	}
 
 	@SafeVarargs
-	public final void addSerializer(Class<F> dataObject, Class<? extends Dashable<?>>... dashables) {
+	public final void addSerializer(Class<?> dataObject, Class<? extends Dashable<?>>... dashables) {
 		this.serializers.put(dataObject, DashSerializer.create(cacheDir, dataObject, dashObjects, dashables));
 	}
 
 	public void setCacheArea(String name) {
-		this.cacheArea = caches.computeIfAbsent(name, s -> new CacheArea(new ArrayList<>(), s));
+		this.cacheArea = new CacheArea(new ArrayList<>(), name);
 	}
 
 	public void setSubCacheArea(String name) {
 		if (cacheArea == null) throw new RuntimeException("Current Cache Area has not been set.");
-		this.subCacheArea = cacheArea.subCachesMap.computeIfAbsent(name, SubCacheArea::new);
+		this.subCacheArea = new SubCacheArea(name);
 	}
 
-	public F load(Class<F> dataObject) {
+	public boolean cacheExists() {
+		return Files.exists(getCurrentCachePath());
+	}
+
+	public <O> O load(Class<O> dataObject) {
 		try {
-			return this.serializers.get(dataObject).decode(cacheArea.getPath(cacheDir, subCacheArea));
+			return (O) this.serializers.get(dataObject).decode(getCurrentCachePath());
 		} catch (IOException e) {
 			cacheArea.clear(cacheDir);
 			caches.remove(cacheArea.name);
@@ -58,13 +61,17 @@ public final class IOHandler<F> {
 		}
 	}
 
-	public void save(F dataObject) {
+	public <O> void save(O dataObject) {
 		try {
-			this.serializers.get(dataObject.getClass()).encode(dataObject, cacheArea.getPath(cacheDir, subCacheArea));
+			((DashSerializer<O>) this.serializers.get(dataObject.getClass())).encode(dataObject, getCurrentCachePath());
 		} catch (IOException e) {
 			cacheArea.clear(cacheDir);
 			caches.remove(cacheArea.name);
 			throw new RuntimeException(e);
 		}
+	}
+
+	private Path getCurrentCachePath() {
+		return cacheArea.getPath(cacheDir, subCacheArea);
 	}
 }
