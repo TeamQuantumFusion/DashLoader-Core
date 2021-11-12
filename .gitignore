@@ -26,4 +26,7 @@ bin/
 # macos
 
 *.DS_STORE
-/main/
+
+# funny
+/cache/
+hs_err_pid*

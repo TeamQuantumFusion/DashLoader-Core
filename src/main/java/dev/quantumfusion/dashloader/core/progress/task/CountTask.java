@@ -20,6 +20,10 @@ public class CountTask extends Task {
 		this.currentSubtask = DummyTask.EMPTY;
 	}
 
+	public void task(Runnable runnable) {
+		runnable.run();
+		completedTask();
+	}
 
 	@Override
 	public void setSubtask(Task subTask) {
