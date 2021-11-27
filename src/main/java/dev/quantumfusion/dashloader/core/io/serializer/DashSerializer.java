@@ -140,7 +140,6 @@ public class DashSerializer<O> {
 
 		try (FileChannel channel = FileChannel.open(getFilePath(subCache))) {
 			final long size = channel.size();
-			System.out.println(size);
 			var map = channel.map(FileChannel.MapMode.READ_ONLY, 0, size);
 			ByteBuffer decoded;
 			if (compressor != null) {
