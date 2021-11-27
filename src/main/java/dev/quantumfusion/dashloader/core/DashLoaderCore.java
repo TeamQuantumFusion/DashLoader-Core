@@ -18,9 +18,9 @@ import java.util.function.Consumer;
  */
 public final class DashLoaderCore {
 	public static DashLoaderCore CORE;
+	public static ConfigHandler CONFIG;
 	public static RegistryHandler REGISTRY;
 	public static ThreadHandler THREAD;
-	public static ConfigHandler CONFIG;
 	public static ProgressHandler PROGRESS;
 	public static IOHandler IO;
 
@@ -32,9 +32,9 @@ public final class DashLoaderCore {
 		this.print = print;
 
 		// Handlers
+		CONFIG = new ConfigHandler("DashLoaderCore property. OwO", configPath);
 		REGISTRY = new RegistryHandler(dashObjects);
 		THREAD = new ThreadHandler("DashLoaderCore property. UwU");
-		CONFIG = new ConfigHandler("DashLoaderCore property. OwO", configPath);
 		PROGRESS = new ProgressHandler("DashLoaderCore property. ^w^");
 		IO = new IOHandler(dashObjects, "DashLoaderCore property. >w<", cacheDir);
 		INITIALIZED = true;

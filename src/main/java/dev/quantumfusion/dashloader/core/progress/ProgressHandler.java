@@ -1,5 +1,6 @@
 package dev.quantumfusion.dashloader.core.progress;
 
+import dev.quantumfusion.dashloader.core.DashLoaderCore;
 import dev.quantumfusion.dashloader.core.progress.task.DummyTask;
 import dev.quantumfusion.dashloader.core.progress.task.Task;
 
@@ -27,7 +28,7 @@ public final class ProgressHandler {
 
 	private void tickProgress() {
 		final double actualProgress = task.getProgress();
-		final double divisionSpeed = (actualProgress < currentProgress) ? 3 : 10;
+		final double divisionSpeed = (actualProgress < currentProgress) ? 3 : DashLoaderCore.CONFIG.config.progressBarSpeedDivision;
 		this.currentProgress += (actualProgress - currentProgress) / divisionSpeed;
 	}
 

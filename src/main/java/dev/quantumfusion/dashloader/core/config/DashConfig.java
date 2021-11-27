@@ -33,7 +33,7 @@ public class DashConfig {
 	public String progressTrackColor = "base0";
 
 	// Lines
-	public int lineAmount = 100;
+	public int lineAmount = 200;
 	public int lineWidth = 100;
 	public int lineMinHeight = 4;
 	public int lineMaxHeight = 10;
