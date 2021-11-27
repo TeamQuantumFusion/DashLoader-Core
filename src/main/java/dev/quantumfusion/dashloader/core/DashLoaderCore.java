@@ -17,6 +17,7 @@ import java.util.function.Consumer;
  * The heart of dashloader, Handles Config, IO and the serialization
  */
 public final class DashLoaderCore {
+	public static final String PRINT_PREFIX = "[dl-core]: ";
 	public static DashLoaderCore CORE;
 	public static ConfigHandler CONFIG;
 	public static RegistryHandler REGISTRY;
@@ -26,9 +27,9 @@ public final class DashLoaderCore {
 
 	private static boolean INITIALIZED = false;
 	// Basic Information
-	private final Consumer<String> print;
+	private final Printer print;
 
-	private DashLoaderCore(List<DashObjectClass<?, ?>> dashObjects, Consumer<String> print, Path cacheDir, Path configPath) {
+	private DashLoaderCore(List<DashObjectClass<?, ?>> dashObjects, Printer print, Path cacheDir, Path configPath) {
 		this.print = print;
 
 		// Handlers
@@ -40,7 +41,7 @@ public final class DashLoaderCore {
 		INITIALIZED = true;
 	}
 
-	public static void initialize(Path cacheDir, Path configPath, Collection<Class<?>> dashClasses, Consumer<String> print) {
+	public static void initialize(Path cacheDir, Path configPath, Collection<Class<?>> dashClasses, Printer print) {
 		if (INITIALIZED) throw new RuntimeException("Core is already initialized");
 		CORE = new DashLoaderCore(parseDashObjects(dashClasses), print, cacheDir, configPath);
 	}
@@ -55,14 +56,26 @@ public final class DashLoaderCore {
 
 	// Print things
 	public void info(String info) {
-		print.accept("/info/ " + info);
+		print.info.accept(PRINT_PREFIX + info);
 	}
 
 	public void warn(String info) {
-		print.accept("/warn/ " + info);
+		print.warn.accept(PRINT_PREFIX + info);
 	}
 
 	public void error(String info) {
-		print.accept("/error/ " + info);
+		print.error.accept(PRINT_PREFIX + info);
+	}
+
+	public static final class Printer {
+		private final Consumer<String> info;
+		private final Consumer<String> warn;
+		private final Consumer<String> error;
+
+		public Printer(Consumer<String> info, Consumer<String> warn, Consumer<String> error) {
+			this.info = info;
+			this.warn = warn;
+			this.error = error;
+		}
 	}
 }

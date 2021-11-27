@@ -30,7 +30,7 @@ public class TestAll {
 																					 HoldingBakedModelDash.class,
 																					 HoldingHoldingBakedModelDash.class,
 																					 HoldingHoldingHoldingModelDash.class),
-								  System.out::println);
+								  new DashLoaderCore.Printer(System.out::println, System.out::println, System.err::println));
 		DashLoaderCore.IO.setCacheArea("mods-wahtever");
 		DashLoaderCore.IO.setSubCacheArea("resource-wahatever");
 
