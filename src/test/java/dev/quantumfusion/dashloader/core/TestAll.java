@@ -25,12 +25,14 @@ public class TestAll {
 		data.fill();
 
 
-		DashLoaderCore.initialize(Path.of("./cache/"), Path.of("./config/"), List.of(IdentifierDash.class,
-																					 BakedModelDash.class,
-																					 HoldingBakedModelDash.class,
-																					 HoldingHoldingBakedModelDash.class,
-																					 HoldingHoldingHoldingModelDash.class),
+		DashLoaderCore.initialize(Path.of("./cache/"), Path.of("./config/"),
 								  new DashLoaderCore.Printer(System.out::println, System.out::println, System.err::println));
+		DashLoaderCore.CORE.prepareCore();
+		DashLoaderCore.CORE.launchCore(List.of(IdentifierDash.class,
+											   BakedModelDash.class,
+											   HoldingBakedModelDash.class,
+											   HoldingHoldingBakedModelDash.class,
+											   HoldingHoldingHoldingModelDash.class));
 		DashLoaderCore.IO.setCacheArea("mods-wahtever");
 		DashLoaderCore.IO.setSubCacheArea("resource-wahatever");
 

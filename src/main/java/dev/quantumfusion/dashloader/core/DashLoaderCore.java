@@ -26,24 +26,40 @@ public final class DashLoaderCore {
 	public static IOHandler IO;
 
 	private static boolean INITIALIZED = false;
-	// Basic Information
+	private static boolean PREPARED = false;
+	private static boolean LAUNCHED = false;
+
 	private final Printer print;
+	private final Path cacheDir;
+	private final Path configPath;
 
-	private DashLoaderCore(List<DashObjectClass<?, ?>> dashObjects, Printer print, Path cacheDir, Path configPath) {
+	private DashLoaderCore(Printer print, Path cacheDir, Path configPath) {
 		this.print = print;
-
-		// Handlers
-		CONFIG = new ConfigHandler("DashLoaderCore property. OwO", configPath);
-		REGISTRY = new RegistryHandler(dashObjects);
-		THREAD = new ThreadHandler("DashLoaderCore property. UwU");
-		PROGRESS = new ProgressHandler("DashLoaderCore property. ^w^");
-		IO = new IOHandler(dashObjects, "DashLoaderCore property. >w<", cacheDir);
+		this.cacheDir = cacheDir;
+		this.configPath = configPath;
 		INITIALIZED = true;
 	}
 
-	public static void initialize(Path cacheDir, Path configPath, Collection<Class<?>> dashClasses, Printer print) {
+	public static void initialize(Path cacheDir, Path configPath, Printer print) {
 		if (INITIALIZED) throw new RuntimeException("Core is already initialized");
-		CORE = new DashLoaderCore(parseDashObjects(dashClasses), print, cacheDir, configPath);
+		CORE = new DashLoaderCore(print, cacheDir, configPath);
+	}
+
+	public void prepareCore() {
+		if (PREPARED) throw new RuntimeException("Core is already prepared");
+		CONFIG = new ConfigHandler("DashLoaderCore property. OwO", configPath);
+		THREAD = new ThreadHandler("DashLoaderCore property. UwU");
+		PROGRESS = new ProgressHandler("DashLoaderCore property. ^w^");
+		PREPARED = true;
+	}
+
+	public void launchCore(Collection<Class<?>> dashClasses) {
+		if (LAUNCHED) throw new RuntimeException("Core is already launched");
+		final var dashObjects = parseDashObjects(dashClasses);
+		IO = new IOHandler(dashObjects, "DashLoaderCore property. >w<", cacheDir);
+		REGISTRY = new RegistryHandler(dashObjects);
+		LAUNCHED = true;
+
 	}
 
 	private static List<DashObjectClass<?, ?>> parseDashObjects(Collection<Class<?>> dashClasses) {
