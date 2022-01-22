@@ -13,6 +13,7 @@ import dev.quantumfusion.hyphen.ClassDefiner;
 import dev.quantumfusion.hyphen.HyphenSerializer;
 import dev.quantumfusion.hyphen.SerializerFactory;
 import dev.quantumfusion.hyphen.io.ByteBufferIO;
+import dev.quantumfusion.hyphen.io.UnsafeIO;
 import dev.quantumfusion.hyphen.scan.annotations.DataSubclasses;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,11 +30,11 @@ import java.util.List;
 
 public class DashSerializer<O> {
 	private final Class<O> dataClass;
-	private final HyphenSerializer<ByteBufferIO, O> serializer;
+	private final HyphenSerializer<UnsafeIO, O> serializer;
 	@Nullable
 	private final SerializerCompressor compressor;
 
-	public DashSerializer(Class<O> dataClass, HyphenSerializer<ByteBufferIO, O> serializer) {
+	public DashSerializer(Class<O> dataClass, HyphenSerializer<UnsafeIO, O> serializer) {
 		this.dataClass = dataClass;
 		this.serializer = serializer;
 		this.compressor = SerializerCompressor.create(DashLoaderCore.CONFIG.config.compression);
@@ -46,12 +47,12 @@ public class DashSerializer<O> {
 			var classDefiner = new ClassDefiner(Thread.currentThread().getContextClassLoader());
 			try {
 				classDefiner.def(getSerializerName(holderClass), Files.readAllBytes(serializerFileLocation));
-				return new DashSerializer<>(holderClass, (HyphenSerializer<ByteBufferIO, F>) ClassDefiner.SERIALIZER);
+				return new DashSerializer<>(holderClass, (HyphenSerializer<UnsafeIO, F>) ClassDefiner.SERIALIZER);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-		var factory = SerializerFactory.createDebug(ByteBufferIO.class, holderClass);
+		var factory = SerializerFactory.createDebug(UnsafeIO.class, holderClass);
 		factory.addGlobalAnnotation(AbstractDataChunk.class, DataSubclasses.class, new Class[]{DataChunk.class, StagedDataChunk.class});
 		factory.setClassName(getSerializerName(holderClass));
 		factory.setExportPath(serializerFileLocation);
@@ -101,7 +102,7 @@ public class DashSerializer<O> {
 
 
 				task.setSubtask(byteBufferTask);
-				serializer.put(ByteBufferIO.wrap(byteBuffer), object);
+				serializer.put(UnsafeIO.wrap(byteBuffer), object);
 				task.completedTask();
 
 				byteBuffer.rewind();
@@ -122,7 +123,7 @@ public class DashSerializer<O> {
 				task.completedTask();
 
 				task.setSubtask(byteBufferTask);
-				serializer.put(ByteBufferIO.wrap(map), object);
+				serializer.put(UnsafeIO.wrap(map), object);
 
 			}
 		}
@@ -148,7 +149,7 @@ public class DashSerializer<O> {
 				decoded.rewind();
 			} else decoded = map;
 
-			return serializer.get(ByteBufferIO.wrap(decoded));
+			return serializer.get(UnsafeIO.wrap(decoded));
 		}
 	}
 }
