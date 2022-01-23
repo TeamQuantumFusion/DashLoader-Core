@@ -4,6 +4,8 @@ import dev.quantumfusion.dashloader.core.DashLoaderCore;
 import dev.quantumfusion.dashloader.core.progress.task.DummyTask;
 import dev.quantumfusion.dashloader.core.progress.task.Task;
 
+import java.util.HashMap;
+
 public final class ProgressHandler {
 	private Task task = DummyTask.EMPTY;
 
@@ -12,10 +14,16 @@ public final class ProgressHandler {
 	private long lastUpdate = System.currentTimeMillis();
 	private double currentProgress = 0;
 
+	private HashMap<String, String> translations = new HashMap<>();
+
 	public ProgressHandler(String password) {
 		if (!password.equals("DashLoaderCore property. ^w^")) {
 			throw new RuntimeException("You cannot initialize DashConfigHandler. git gud.");
 		}
+	}
+
+	public void setTranslations(HashMap<String, String> translations)  {
+		this.translations = translations;
 	}
 
 	public void setTask(Task task) {
@@ -46,9 +54,7 @@ public final class ProgressHandler {
 	}
 
 	public ProgressHandler setCurrentTask(String currentTask) {
-		this.currentTask = currentTask;
+		this.currentTask = translations.getOrDefault(currentTask, currentTask);
 		return this;
 	}
-
-
 }
