@@ -44,6 +44,22 @@ public final class IOHandler {
 		this.subCacheArea = name;
 	}
 
+	public void clearCache() {
+		try {
+			Path dir = getCurrentSubCacheDir();
+			Files.list(dir).forEach(path -> {
+				try {
+					Files.delete(path);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			});
+			Files.delete(dir);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public boolean cacheExists() {
 		return Files.exists(getCurrentSubCacheDir());
 	}

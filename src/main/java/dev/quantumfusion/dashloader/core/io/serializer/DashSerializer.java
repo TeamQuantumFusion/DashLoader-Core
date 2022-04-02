@@ -1,26 +1,24 @@
 package dev.quantumfusion.dashloader.core.io.serializer;
 
+import com.github.luben.zstd.Zstd;
 import dev.quantumfusion.dashloader.core.DashLoaderCore;
 import dev.quantumfusion.dashloader.core.DashObjectClass;
 import dev.quantumfusion.dashloader.core.Dashable;
 import dev.quantumfusion.dashloader.core.progress.ProgressHandler;
 import dev.quantumfusion.dashloader.core.progress.task.CountTask;
-import dev.quantumfusion.dashloader.core.progress.task.DynamicTask;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.DataChunk;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.StagedDataChunk;
 import dev.quantumfusion.hyphen.ClassDefiner;
 import dev.quantumfusion.hyphen.HyphenSerializer;
 import dev.quantumfusion.hyphen.SerializerFactory;
-import dev.quantumfusion.hyphen.io.ByteBufferIO;
 import dev.quantumfusion.hyphen.io.UnsafeIO;
 import dev.quantumfusion.hyphen.scan.annotations.DataSubclasses;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,15 +27,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DashSerializer<O> {
+
+	private static final int HEADER_SIZE = 5;
 	private final Class<O> dataClass;
 	private final HyphenSerializer<UnsafeIO, O> serializer;
-	@Nullable
-	private final SerializerCompressor compressor;
+	private final byte compressionLevel;
 
 	public DashSerializer(Class<O> dataClass, HyphenSerializer<UnsafeIO, O> serializer) {
 		this.dataClass = dataClass;
 		this.serializer = serializer;
-		this.compressor = SerializerCompressor.create(DashLoaderCore.CONFIG.config.compression);
+		this.compressionLevel = DashLoaderCore.CONFIG.config.compression;
 	}
 
 	public static <F> DashSerializer<F> create(Path cacheArea, Class<F> holderClass, List<DashObjectClass<?, ?>> dashObjects, Class<? extends Dashable<?>>[] dashables) {
@@ -85,7 +84,7 @@ public class DashSerializer<O> {
 	public void encode(O object, Path subCache) throws IOException {
 		final ProgressHandler progress = DashLoaderCore.PROGRESS;
 
-		CountTask task = new CountTask(compressor == null ? 2 : 4);
+		CountTask task = new CountTask(compressionLevel > 0 ? 5 : 2);
 		progress.getCurrentContext().setSubtask(task);
 		final Path outPath = getFilePath(subCache);
 		prepareFile(outPath);
@@ -94,40 +93,61 @@ public class DashSerializer<O> {
 		try (FileChannel channel = FileChannel.open(outPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ)) {
 			final int rawFileSize = serializer.measure(object);
 
-			if (compressor != null) {
-				final var out = ByteBuffer.allocateDirect(compressor.maxLength(rawFileSize) + 4);
-				final var byteBuffer = ByteBuffer.allocateDirect(rawFileSize);
-				final var byteBufferTask = new DynamicTask(() -> byteBuffer.position() / (double) rawFileSize);
+			if (compressionLevel > 0) {
+				// Allocate
+				final long maxSize =	Zstd.compressBound(rawFileSize);
+				final var dst = UnsafeIO.create((int) maxSize);
+				final var src = UnsafeIO.create(rawFileSize);
 				task.completedTask();
 
+				// Serialize
+				serializer.put(src, object);
 
-				task.setSubtask(byteBufferTask);
-				serializer.put(UnsafeIO.wrap(byteBuffer), object);
 				task.completedTask();
 
-				byteBuffer.rewind();
-
-				task.setSubtask(byteBufferTask);
-				compressor.compress(byteBuffer, out);
+				// Compress
+				src.rewind();
+				final long size = Zstd.compressUnsafe(dst.address(), maxSize, src.address(), rawFileSize, compressionLevel);
 				task.completedTask();
 
-				final int position = out.position();
-				out.limit(position);
-				final MappedByteBuffer map = channel.map(FileChannel.MapMode.READ_WRITE, 0, position + 4);
-				map.putInt(rawFileSize); // actual size
-				out.rewind();
-				map.put(out);
+				// Write
+				final var map = channel.map(FileChannel.MapMode.READ_WRITE, 0, size + HEADER_SIZE);
+				task.completedTask();
+
+				final var file = UnsafeIO.wrap(map);
+				file.putByte(compressionLevel);
+				file.putInt(rawFileSize);
+				getUnsafeInstance().copyMemory(dst.address(), file.address() + HEADER_SIZE, size);
+				src.close();
+				dst.close();
 			} else {
-				final var map = channel.map(FileChannel.MapMode.READ_WRITE, 0, rawFileSize);
-				final var byteBufferTask = new DynamicTask(() -> map.position() / (double) rawFileSize);
+				final var map = channel.map(FileChannel.MapMode.READ_WRITE, 0, rawFileSize + 1);
 				task.completedTask();
-
-				task.setSubtask(byteBufferTask);
-				serializer.put(UnsafeIO.wrap(map), object);
-
+				UnsafeIO file = UnsafeIO.wrap(map);
+				file.putByte(compressionLevel);
+				serializer.put(file, object);
 			}
 		}
 		task.completedTask();
+	}
+
+	private static sun.misc.Unsafe getUnsafeInstance() {
+		Class<sun.misc.Unsafe> clazz = sun.misc.Unsafe.class;
+		for (Field field : clazz.getDeclaredFields()) {
+			if (!field.getType().equals(clazz))
+				continue;
+			final int modifiers = field.getModifiers();
+			if (!(Modifier.isStatic(modifiers) && Modifier.isFinal(modifiers)))
+				continue;
+			try {
+				field.setAccessible(true);
+				return (sun.misc.Unsafe) field.get(null);
+			} catch (Exception ignored) {
+			}
+			break;
+		}
+
+		throw new IllegalStateException("Unsafe is unavailable.");
 	}
 
 
@@ -140,16 +160,20 @@ public class DashSerializer<O> {
 		prepareFile(subCache);
 
 		try (FileChannel channel = FileChannel.open(getFilePath(subCache))) {
-			final long size = channel.size();
-			var map = channel.map(FileChannel.MapMode.READ_ONLY, 0, size);
-			ByteBuffer decoded;
-			if (compressor != null) {
-				decoded = ByteBuffer.allocateDirect(map.getInt());
-				compressor.decompress(map, decoded);
-				decoded.rewind();
-			} else decoded = map;
+			var map = UnsafeIO.wrap(channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size()));
 
-			return serializer.get(UnsafeIO.wrap(decoded));
+			byte compression = map.getByte();
+			if (compression > 0) {
+				final int size = map.getInt();
+				final var dst = UnsafeIO.create(size);
+				Zstd.decompressUnsafe(dst.address(), size, map.address() + HEADER_SIZE, channel.size() - HEADER_SIZE);
+				O object = serializer.get(dst);
+				dst.close();
+
+				return object;
+			} else {
+				return serializer.get(map);
+			}
 		}
 	}
 }

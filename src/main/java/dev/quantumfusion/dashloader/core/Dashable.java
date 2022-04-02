@@ -2,9 +2,13 @@ package dev.quantumfusion.dashloader.core;
 
 import dev.quantumfusion.dashloader.core.registry.RegistryReader;
 
+/**
+ * The Dashable interface is the interface to implement when adding DashLoader cache support to a registry object.
+ * @param <R> Raw Object.
+ */
 public interface Dashable<R> {
 	/**
-	 * Runs before {@link Dashable#export(RegistryReader)} on a single thread
+	 * Runs before {@link Dashable#export(RegistryReader)} on the main thread.
 	 */
 	default void preExport(RegistryReader reader) {
 	}
@@ -15,7 +19,7 @@ public interface Dashable<R> {
 	R export(RegistryReader reader);
 
 	/**
-	 * Runs after {@link Dashable#export(RegistryReader)} on a single thread
+	 * Runs after {@link Dashable#export(RegistryReader)} on the main thread.
 	 */
 	default void postExport(RegistryReader reader) {
 	}

@@ -2,15 +2,18 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
-
+    id 'idea'
 }
 
 group 'dev.quantumfusion.dashloader'
-version '1.2.0'
+version '1.4.0'
 
 repositories {
-    mavenCentral()
     mavenLocal()
+    mavenCentral()
+    maven {
+        url 'https://quantumfusion.dev/maven'
+    }
 }
 
 java {
@@ -18,8 +21,8 @@ java {
 }
 
 dependencies {
-    api libs.hyphen
-    api 'io.airlift:aircompressor:0.21'
+    api "dev.quantumfusion:hyphen:0.2.0"
+    api 'com.github.luben:zstd-jni:1.5.2-2'
 
 
     implementation libs.fastutil

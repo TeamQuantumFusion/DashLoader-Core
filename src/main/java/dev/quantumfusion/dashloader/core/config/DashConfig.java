@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class DashConfig {
 	public Map<String, Boolean> options = new LinkedHashMap<>();
-	public String compression = "ZSTD"; // LZ4, LZO, ZSTD, SNAPPY, RAW
+	public byte compression = 3;
 
 	// ==================================== Screen ====================================
 	public boolean debugMode = false;
