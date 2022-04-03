@@ -1,5 +1,6 @@
 [versions]
 hyphen = "0.2"
+taski = "1.1.0"
 junit-jupiter = "5.7.0"
 
 
@@ -10,6 +11,10 @@ version.ref = "hyphen"
 [libraries.jetbrains-annotations]
 module = "org.jetbrains:annotations"
 version = "22.0.0"
+
+[libraries.taski]
+module = "dev.quantumfusion:Taski"
+version.ref = "taski"
 
 [libraries.fastutil]
 module = "it.unimi.dsi:fastutil"

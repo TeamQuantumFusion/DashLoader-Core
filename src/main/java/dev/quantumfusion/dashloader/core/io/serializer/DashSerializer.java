@@ -5,16 +5,19 @@ import dev.quantumfusion.dashloader.core.DashLoaderCore;
 import dev.quantumfusion.dashloader.core.DashObjectClass;
 import dev.quantumfusion.dashloader.core.Dashable;
 import dev.quantumfusion.dashloader.core.progress.ProgressHandler;
-import dev.quantumfusion.dashloader.core.progress.task.CountTask;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.DataChunk;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.StagedDataChunk;
+import dev.quantumfusion.dashloader.core.util.DashUtil;
 import dev.quantumfusion.hyphen.ClassDefiner;
 import dev.quantumfusion.hyphen.HyphenSerializer;
 import dev.quantumfusion.hyphen.SerializerFactory;
 import dev.quantumfusion.hyphen.io.UnsafeIO;
 import dev.quantumfusion.hyphen.scan.annotations.DataSubclasses;
+import dev.quantumfusion.taski.Task;
+import dev.quantumfusion.taski.builtin.StepTask;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -25,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class DashSerializer<O> {
 
@@ -81,11 +85,12 @@ public class DashSerializer<O> {
 		}
 	}
 
-	public void encode(O object, Path subCache) throws IOException {
-		final ProgressHandler progress = DashLoaderCore.PROGRESS;
+	public void encode(O object, Path subCache, @Nullable Consumer<Task> taskConsumer) throws IOException {
+		StepTask task = new StepTask(dataClass.getSimpleName(),  compressionLevel > 0 ? 5 : 2);
+		if (taskConsumer != null) {
+			taskConsumer.accept(task);
+		}
 
-		CountTask task = new CountTask(compressionLevel > 0 ? 5 : 2);
-		progress.getCurrentContext().setSubtask(task);
 		final Path outPath = getFilePath(subCache);
 		prepareFile(outPath);
 
@@ -98,21 +103,21 @@ public class DashSerializer<O> {
 				final long maxSize =	Zstd.compressBound(rawFileSize);
 				final var dst = UnsafeIO.create((int) maxSize);
 				final var src = UnsafeIO.create(rawFileSize);
-				task.completedTask();
+				task.next();
 
 				// Serialize
 				serializer.put(src, object);
 
-				task.completedTask();
+				task.next();
 
 				// Compress
 				src.rewind();
 				final long size = Zstd.compressUnsafe(dst.address(), maxSize, src.address(), rawFileSize, compressionLevel);
-				task.completedTask();
+				task.next();
 
 				// Write
 				final var map = channel.map(FileChannel.MapMode.READ_WRITE, 0, size + HEADER_SIZE);
-				task.completedTask();
+				task.next();
 
 				final var file = UnsafeIO.wrap(map);
 				file.putByte(compressionLevel);
@@ -122,13 +127,13 @@ public class DashSerializer<O> {
 				dst.close();
 			} else {
 				final var map = channel.map(FileChannel.MapMode.READ_WRITE, 0, rawFileSize + 1);
-				task.completedTask();
+				task.next();
 				UnsafeIO file = UnsafeIO.wrap(map);
 				file.putByte(compressionLevel);
 				serializer.put(file, object);
 			}
 		}
-		task.completedTask();
+		task.next();
 	}
 
 	private static sun.misc.Unsafe getUnsafeInstance() {
@@ -156,23 +161,35 @@ public class DashSerializer<O> {
 		return subCache.resolve(dataClass.getSimpleName().toLowerCase() + ".dld");
 	}
 
-	public O decode(Path subCache) throws IOException {
+	public O decode(Path subCache, @Nullable Consumer<Task> taskConsumer) throws IOException {
 		prepareFile(subCache);
 
+		StepTask task = new StepTask(dataClass.getSimpleName(), 4);
+		if (taskConsumer != null) {
+			taskConsumer.accept(task);
+		}
+
 		try (FileChannel channel = FileChannel.open(getFilePath(subCache))) {
+			task.next();
 			var map = UnsafeIO.wrap(channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size()));
+			task.next();
 
 			byte compression = map.getByte();
 			if (compression > 0) {
 				final int size = map.getInt();
 				final var dst = UnsafeIO.create(size);
 				Zstd.decompressUnsafe(dst.address(), size, map.address() + HEADER_SIZE, channel.size() - HEADER_SIZE);
+				task.next();
 				O object = serializer.get(dst);
+				task.next();
 				dst.close();
 
 				return object;
 			} else {
-				return serializer.get(map);
+				task.next();
+				O object = serializer.get(map);
+				task.next();
+				return object;
 			}
 		}
 	}

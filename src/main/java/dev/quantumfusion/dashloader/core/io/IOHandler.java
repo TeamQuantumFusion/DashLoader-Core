@@ -3,6 +3,8 @@ package dev.quantumfusion.dashloader.core.io;
 import dev.quantumfusion.dashloader.core.DashObjectClass;
 import dev.quantumfusion.dashloader.core.Dashable;
 import dev.quantumfusion.dashloader.core.io.serializer.DashSerializer;
+import dev.quantumfusion.taski.Task;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,6 +12,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * The IO Module of DashLoaderCore. Handles Serializers and Caches.
@@ -64,17 +67,17 @@ public final class IOHandler {
 		return Files.exists(getCurrentSubCacheDir());
 	}
 
-	public <O> O load(Class<O> dataObject) {
+	public <O> O load(Class<O> dataObject, @Nullable Consumer<Task> task) {
 		try {
-			return (O) this.serializers.get(dataObject).decode(getCurrentSubCacheDir());
+			return (O) this.serializers.get(dataObject).decode(getCurrentSubCacheDir(), task);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	public <O> void save(O dataObject) {
+	public <O> void save(O dataObject, @Nullable Consumer<Task> task) {
 		try {
-			((DashSerializer<O>) this.serializers.get(dataObject.getClass())).encode(dataObject, getCurrentSubCacheDir());
+			((DashSerializer<O>) this.serializers.get(dataObject.getClass())).encode(dataObject, getCurrentSubCacheDir(), task);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

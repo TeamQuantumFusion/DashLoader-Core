@@ -57,7 +57,9 @@ public final class ThreadHandler {
 	}
 
 	public void parallelRunnable(Collection<Runnable> runnables) {
-		threadPool.invokeAll(runnables.stream().map(Executors::callable).toList());
+		for (Future<Object> future : threadPool.invokeAll(runnables.stream().map(Executors::callable).toList())) {
+			acquire(future);
+		}
 	}
 
 	@SafeVarargs

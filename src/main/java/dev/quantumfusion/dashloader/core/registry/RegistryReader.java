@@ -3,6 +3,11 @@ package dev.quantumfusion.dashloader.core.registry;
 
 import dev.quantumfusion.dashloader.core.DashLoaderCore;
 import dev.quantumfusion.dashloader.core.registry.chunk.data.AbstractDataChunk;
+import dev.quantumfusion.taski.Task;
+import dev.quantumfusion.taski.builtin.StepTask;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 @SuppressWarnings("FinalMethodInFinalClass")
 public final class RegistryReader {
@@ -16,16 +21,26 @@ public final class RegistryReader {
 		this.data = new Object[data.length][];
 	}
 
-	public final void export() {
+	public final void export(@Nullable Consumer<Task> taskConsumer) {
+		StepTask task = new StepTask("Exporting", dataChunks.length);
+		if (taskConsumer != null) {
+			taskConsumer.accept(task);
+		}
+
 		for (int i = 0; i < dataChunks.length; i++) {
 			var chunk = dataChunks[i];
 			final int size = chunk.getDashableSize();
 			var dataObjects = new Object[size];
 			data[i] = dataObjects;
-			DashLoaderCore.CORE.info("Loading " + size + " " + chunk.name + "s");
-			chunk.preExport(this);
-			chunk.export(dataObjects, this);
-			chunk.postExport(this);
+			task.run(new StepTask(chunk.name, 3), (subTask) -> {
+				DashLoaderCore.CORE.info("Loading " + size + " " + chunk.name + "s");
+				chunk.preExport(this);
+				subTask.next();
+				chunk.export(dataObjects, this);
+				subTask.next();
+				chunk.postExport(this);
+				subTask.next();
+			});
 		}
 	}
 

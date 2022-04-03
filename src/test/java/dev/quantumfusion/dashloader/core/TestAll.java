@@ -64,22 +64,22 @@ public class TestAll {
 			final RegistryDataHolder registryDataHolder = new RegistryDataHolder(holder, identifierData, modelData);
 
 			System.out.println("Saving");
-			DashLoaderCore.IO.save(registryDataHolder);
-			DashLoaderCore.IO.save(registryMappings);
+			DashLoaderCore.IO.save(registryDataHolder, null);
+			DashLoaderCore.IO.save(registryMappings, null);
 		} else {
 			System.out.println("Loading cache");
 
 			// loads from file
 			System.out.println("Read from file Data");
-			final RegistryDataHolder registryDataHolder = DashLoaderCore.IO.load(RegistryDataHolder.class);
+			final RegistryDataHolder registryDataHolder = DashLoaderCore.IO.load(RegistryDataHolder.class, null);
 			System.out.println("Read from file Mappings");
-			final RegistryMappings registryMappings = DashLoaderCore.IO.load(RegistryMappings.class);
+			final RegistryMappings registryMappings = DashLoaderCore.IO.load(RegistryMappings.class, null);
 
 			System.out.println("Create reader");
 			var reader = DashLoaderCore.REGISTRY.createReader(registryDataHolder);
 
 			System.out.println("Exporting");
-			reader.export();
+			reader.export(null);
 
 			System.out.println("Acquire info");
 			VanillaData dataOut = new VanillaData();
