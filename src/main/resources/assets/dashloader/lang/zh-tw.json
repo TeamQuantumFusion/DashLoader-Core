@@ -1,0 +1,17 @@
+{
+  "initializing": "正在初始化",
+  "debug": "已在設定中開啟調試模式。",
+  "convert": "正在轉化",
+  "convert.blockstate": "正在轉化方塊狀態",
+  "convert.model": "正在轉化模型",
+  "convert.image": "正在轉化貼圖",
+  "convert.particle": "正在轉化粒子",
+  "convert.font": "正在轉化字體",
+  "convert.splashtext": "正在轉化閃爍標語",
+  "convert.shader": "正在轉化光影",
+  "export.model": "正在導出模型",
+  "export.image": "正在導出貼圖",
+  "export.registry": "正在導出註冊表",
+  "export.identifier": "正在導出標識",
+  "export.quad": "正在導出四邊形"
+}
