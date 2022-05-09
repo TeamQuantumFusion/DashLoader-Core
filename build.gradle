@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'dev.quantumfusion.dashloader'
-version '1.5.0'
+version '1.5.2'
 
 repositories {
     mavenLocal()
@@ -21,7 +21,7 @@ java {
 }
 
 dependencies {
-    api "dev.quantumfusion:hyphen:0.2.0"
+    api "dev.quantumfusion:Hyphen:0.2.1"
     api 'com.github.luben:zstd-jni:1.5.2-2'
 
 

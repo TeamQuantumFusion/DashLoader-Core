@@ -2,11 +2,10 @@ package dev.quantumfusion.dashloader.core.thread;
 
 import dev.quantumfusion.hyphen.scan.annotations.Data;
 
-import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.RecursiveAction;
 import java.util.function.Function;
 
-@SuppressWarnings("FinalMethodInFinalClass")
-public final class IndexedArrayMapTask<I, O> extends ForkJoinTask<Void> {
+public final class IndexedArrayMapTask<I, O> extends RecursiveAction {
 	private final int threshold;
 	private final int start;
 	private final int stop;
@@ -31,9 +30,8 @@ public final class IndexedArrayMapTask<I, O> extends ForkJoinTask<Void> {
 		this.outArray = outArray;
 		this.function = function;
 	}
-
 	@Override
-	protected final boolean exec() {
+	protected void compute() {
 		final int size = stop - start;
 		if (size < threshold) {
 			for (int i = start; i < stop; i++) {
@@ -43,16 +41,8 @@ public final class IndexedArrayMapTask<I, O> extends ForkJoinTask<Void> {
 		} else {
 			final int middle = start + (size / 2);
 			invokeAll(new IndexedArrayMapTask<>(inArray, outArray, function, threshold, start, middle),
-					  new IndexedArrayMapTask<>(inArray, outArray, function, threshold, middle, stop));
+					new IndexedArrayMapTask<>(inArray, outArray, function, threshold, middle, stop));
 		}
-		return true;
-	}
-
-	public final Void getRawResult() {
-		return null;
-	}
-
-	protected final void setRawResult(Void mustBeNull) {
 	}
 
 	@Data
