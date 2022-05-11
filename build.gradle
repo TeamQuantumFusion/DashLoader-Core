@@ -1,23 +1,16 @@
 plugins {
-    id 'java-library'
-    id 'maven-publish'
-    id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
+    id "java-library"
+    id "maven-publish"
+    id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
     id 'idea'
 }
 
-group 'dev.quantumfusion.dashloader'
-version '1.5.2'
+group "dev.quantumfusion.dashloader"
+version "1.5.2"
 
 repositories {
     mavenLocal()
     mavenCentral()
-    maven {
-        url 'https://quantumfusion.dev/maven'
-    }
-}
-
-java {
-    withSourcesJar()
 }
 
 dependencies {
@@ -34,15 +27,24 @@ dependencies {
     testRuntimeOnly libs.junit.jupiter.engine
 }
 
-
 test {
     useJUnitPlatform()
 }
 
+java {
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile) {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    options.encoding = "UTF-8"
+}
+
 publishing {
     publications {
-        mavenJava(MavenPublication) {
-            from(components.java)
+        dashLoaderCore(MavenPublication) {
+            from components.java
         }
     }
 }
