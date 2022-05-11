@@ -21,9 +21,8 @@ java {
 }
 
 dependencies {
-    api "dev.quantumfusion:Hyphen:0.2.1"
-    api 'com.github.luben:zstd-jni:1.5.2-2'
-
+    api libs.hyphen
+    api libs.zstd.jni
 
     implementation libs.fastutil
     implementation libs.jetbrains.annotations
